@@ -1,0 +1,16 @@
+<launch>
+
+    <node name="naze"  pkg="rosflight"  type="rosflight_io" output="screen">
+        <param name="port" value="/dev/naze"/>
+    </node>
+
+    <node name="uINS" pkg="inertial_sense" type="inertial_sense_node" output="screen">
+        <param name="~port" value="/dev/uINS"/>
+
+        <!-- Kawasaki / Mitsubishi Field -->
+        <param name="~lat_ref" value="40.174308"/>
+        <param name="~lon_ref" value="-111.654166"/>
+        <param name="~h_ref" value="1369.00"/>
+    </node>
+
+</launch>
