@@ -20,6 +20,8 @@
 #include <math.h>
 #include <Eigen/Eigen>
 
+#include <numeric> // <<<<<<<<<<<<<<<<<<<< Ubuntu 18.04
+
 #define EARTH_RADIUS 6378145.0f
 #define FILTER_LENGTH 16
 
