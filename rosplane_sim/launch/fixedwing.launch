@@ -21,13 +21,12 @@
 
   <group ns="$(arg mav_name)">
     <!-- Load Global Parameters for this MAV -->
-    <rosparam command="load" file="$(find rosplane_sim)/params/$(arg mav_name).yaml"/> <!-- Aerodynamic parameters -->
-    <rosparam command="load" file="$(find rosplane)/param/fixedwing.yaml" ns="autopilot"/> <!-- simulation gains -->
-    <node name="autopilot" pkg="rosplane" type="rosplane_controller" output="screen">
+    <rosparam command="load" file="$(find rosplane_sim)/params/$(arg mav_name).yaml"/>
+
+    <node name="autopilot" pkg="rosplane" type="rosplane_controller" >
       <remap from="state" to="truth"/>
-      <param name="groundD" value="0.0"/>
     </node>
-<!--  -->
+
     <node name="estimator" pkg="rosplane" type="rosplane_estimator" output="screen"/>
     <!-- Must publish a status: armed to estimate states -->
     <node name="status_publisher" pkg="rostopic" type="rostopic" output="screen"
@@ -35,7 +34,7 @@
       armed: 'true', failsafe: 'false', rc_override: 'false', offboard: 'false',
       control_mode: 0, error_code: 0, num_errors: 0, loop_time_us: 0}'"/>
 
-    <node name="pathfollower" pkg="rosplane" type="rosplane_path_follower" output="screen">
+    <node name="pathfollower" pkg="rosplane" type="rosplane_path_follower">
        <remap from="state" to="truth"/>
        <remap from="controller_commands" to="controller_commands_dev"/>
     </node>
@@ -46,19 +45,8 @@
 
     <node name="pathmanager" pkg="rosplane" type="rosplane_path_manager" output="screen">
       <remap from="state" to="truth"/>
-      <param name="R_min" value="50.0"/>
-      <param name="loiter_radius" value="75.0"/>
-      <param name="groundD" value="0.0"/>
-      <param name="home_north" value="-100.0"/>
-      <param name="home_east" value="-100.0"/>
-      <param name="loiter_down" value="-150.0"/>
     </node>
 
-    <!-- <node name="pathplanner" pkg="rosplane" type="rosplane_path_planner" output="screen"/>  -->
-    <node name="bomber" pkg="rosplane" type="bomb_dropper" output="screen">
-      <param name="call_gpio" value="false"/>
-    </node>
-    <!-- <node name="position_plotter" pkg="rosplane" type="position_plotter.py" output="screen"> -->
-    <!-- </node> -->
+    <node name="pathplanner" pkg="rosplane" type="rosplane_path_planner"/>
   </group>
 </launch>
