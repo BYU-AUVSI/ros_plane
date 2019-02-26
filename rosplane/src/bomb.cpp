@@ -243,6 +243,11 @@ void Bomb::dropNow()
   NED_t target_location(current_path_.c[0], current_path_.c[1], current_path_.rho);
   NED_t drop_point = calculateDropPoint(Vg3, chi, vehicle_state_.Va, -target_location.D);
   double miss_distance = (target_location - drop_point).norm();
+  ROS_FATAL("Wall time of drop sec: %i", ros::WallTime::now().sec);
+  ROS_FATAL("Wall time of drop nsec: %i", ros::WallTime::now().nsec);
+  ROS_FATAL("Time of drop sec: %i", drop_time_.sec);
+  ROS_FATAL("Time of drop nsec: %i", drop_time_.nsec);
+
   ROS_FATAL("Velocity of the UAV: N: %f, E: %f, D: %f", Vg3.N, Vg3.E, Vg3.D);
   ROS_FATAL("Airspeed of the UAV: Va: %f", vehicle_state_.Va);
   ROS_FATAL("Height: UAV:%f Target: %f", -vehicle_state_.position[2], -target_location.D);
