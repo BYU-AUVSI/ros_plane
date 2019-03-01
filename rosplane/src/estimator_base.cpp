@@ -75,6 +75,7 @@ void estimator_base::inertialSenseCallback(const nav_msgs::Odometry &msg_in)
   msg.position[0]     = msg_in.pose.pose.position.x;
   msg.position[1]     = msg_in.pose.pose.position.y;
   msg.position[2]     = msg_in.pose.pose.position.z + height_offset_;
+  
   if (gps_init_)
   {
     msg.initial_lat   = init_lat_;

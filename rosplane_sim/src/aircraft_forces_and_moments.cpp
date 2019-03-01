@@ -316,6 +316,8 @@ void AircraftForcesAndMoments::SendForces()
   if (std::isfinite(forces_.Fx + forces_.Fy + forces_.Fz + forces_.l + forces_.m + forces_.n))
   {
     // apply the forces and torques to the joint
+    // std::cout << forces_.Fx << " " << -forces_.Fy << " " << -forces_.Fz << std::endl; // ----
+    // std::cout << forces_.l << " " << -forces_.m << " " << -forces_.n << std::endl; // ----
     link_->AddRelativeForce(GazeboVector(forces_.Fx, -forces_.Fy, -forces_.Fz));
     link_->AddRelativeTorque(GazeboVector(forces_.l, -forces_.m, -forces_.n));
   }
