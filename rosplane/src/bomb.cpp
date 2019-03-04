@@ -79,10 +79,11 @@ Bomb::Bomb():
       found_service1 = ros::service::waitForService("gpio_0_high", ros::Duration(1.0));
       found_service2 = ros::service::waitForService("gpio_0_low", ros::Duration(1.0));
     }
-    std_srvs::Trigger ping;
-    gpio_0_high_client_.call(ping);
+    // std_srvs::Trigger ping;
+    // gpio_0_high_client_.call(ping);
+    // ROS_WARN("INIT GPIO to high");
   }
-  gpio_is_high_ = false;
+  // gpio_is_low_ = false;
 
 }
 void Bomb::rx_callback(const rosflight_msgs::RCRaw &msg)
@@ -166,17 +167,19 @@ void Bomb::updateMissDistance(const ros::TimerEvent& event)
     else
       animating_now_ = false; // turns off the animator
   }
-  if (gpio_is_high_)
-  {
-    if ((ros::Time::now() - drop_time_).toSec() > high_time_)
-    {
-      std_srvs::Trigger ping;
-      if (call_gpio_)
-        gpio_0_high_client_.call(ping);
-      ROS_WARN("Bomb drop no longer dropping");
-      gpio_is_high_ = false;
-    }
-  }
+  // if (gpio_is_low_)
+  // {
+  //   if ((ros::Time::now() - drop_time_).toSec() > high_time_)
+  //   {
+  //     std_srvs::Trigger ping;
+  //     if (call_gpio_)
+  //     {
+  //       gpio_0_high_client_.call(ping);
+  //     }
+  //     ROS_WARN("Bomb drop no longer dropping");
+  //     gpio_is_low_ = false;
+  //   }
+  // }
 
 }
 NED_t Bomb::calculateDropPoint(NED_t Vg3, double chi, double Va, double target_height)
@@ -231,7 +234,7 @@ void Bomb::dropNow()
     ros::Duration(0.12).sleep();
     gpio_0_high_client_.call(ping);
   }
-  gpio_is_high_ = true;
+  // gpio_is_low_ = true;
   drop_time_ = ros::Time::now();
   ROS_WARN("DROPPING THE BOMB");
   releasing_period_ = true;

@@ -31,34 +31,36 @@ unsigned long highTime; // Time PWM is high
 unsigned long lowTime; // Time PWM is low
 unsigned long cycleTime; // Total PWM cycle
 double dutyCycle; // Fraction of high over total
-bool isHigh = false; // The odroid pin has gone high
+bool isLow = false; // The odroid pin has gone high
 
 void setup()
 {
   h20.attach(A5);
   h20.writeMicroseconds(low);
+  Serial.begin(115200);
+  Serial.print("Setup completed");
 }
 
 void loop()
 {
-  // Calculate dutyCycle by dividing the time it's high over the total time of the cycle
-  highTime = pulseIn(A4, HIGH);
-  lowTime = pulseIn(A4, LOW);
-  cycleTime = highTime + lowTime;
-  dutyCycle = double(highTime) / double(cycleTime);
-
   // When it recieves 1.8V or higher on A6, open the servo (release the bottle)
   // 340 comes from 1.7/5 * 1024 (5 V max measured through 10 bits)
-  if (analogRead(odroidPin) > 340)
+
+  // Look for a rising edge
+  if (analogRead(odroidPin) < 50)
   {
-    isHigh = true;
+    isLow = true;
+    delay(50);
   }
-  else if (isHigh && analogRead(odroidPin) < 50)
+  else if (isLow && analogRead(odroidPin) > 340) // < 50)
   {
+      Serial.println("Low to high transition detected");
+      Serial.println("Deploying payload");
       h20.writeMicroseconds(high);
       delay(10);
       h20.writeMicroseconds(low);
       delay(1000);
-      isHigh = false;
+      isLow = false;
+      Serial.println("Deployment delay complete, waiting for command...");
   }
 }

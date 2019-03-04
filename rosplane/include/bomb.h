@@ -51,7 +51,7 @@ namespace rosplane
     bool already_dropped_;
     bool bomb_armed_;
     bool call_gpio_;
-    bool gpio_is_high_;
+    bool gpio_is_low_;
     bool rc_armed_bomb_;
     bool found_bomb_switch_;
 
