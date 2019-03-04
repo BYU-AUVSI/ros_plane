@@ -80,7 +80,7 @@ Bomb::Bomb():
       found_service2 = ros::service::waitForService("gpio_0_low", ros::Duration(1.0));
     }
     std_srvs::Trigger ping;
-    gpio_0_low_client_.call(ping);
+    gpio_0_high_client_.call(ping);
   }
   gpio_is_high_ = false;
 
@@ -172,7 +172,7 @@ void Bomb::updateMissDistance(const ros::TimerEvent& event)
     {
       std_srvs::Trigger ping;
       if (call_gpio_)
-        gpio_0_low_client_.call(ping);
+        gpio_0_high_client_.call(ping);
       ROS_WARN("Bomb drop no longer dropping");
       gpio_is_high_ = false;
     }
@@ -227,9 +227,9 @@ void Bomb::dropNow()
   std_srvs::Trigger ping;
   if (call_gpio_)
   {
-    gpio_0_high_client_.call(ping);
-    ros::Duration(0.12).sleep();
     gpio_0_low_client_.call(ping);
+    ros::Duration(0.12).sleep();
+    gpio_0_high_client_.call(ping);
   }
   gpio_is_high_ = true;
   drop_time_ = ros::Time::now();
@@ -308,7 +308,7 @@ void Bomb::armBomb()
   ROS_WARN("ARMING THE BOMB");
   //std_srvs::Trigger ping;
   //if (call_gpio_)
-  //  gpio_0_high_client_.call(ping);
+  //  gpio_0_low_client_.call(ping);
   bomb_armed_ = true;
 }
 void Bomb::animateDrop()
