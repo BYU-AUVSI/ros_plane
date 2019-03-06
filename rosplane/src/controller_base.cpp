@@ -10,7 +10,7 @@ controller_base::controller_base():
 {
   terminate_flight_ = false;
   vehicle_state_sub_ = nh_.subscribe("state", 10, &controller_base::vehicle_state_callback, this);
-  controller_commands_sub_ = nh_.subscribe("controller_commands_dev", 10, &controller_base::controller_commands_callback,
+  controller_commands_sub_ = nh_.subscribe("controller_commands", 10, &controller_base::controller_commands_callback,
                              this);
 	actuators_sub_ = nh_.subscribe("command", 10, &controller_base::actuators_callback, this);
 	status_sub_ = nh_.subscribe("status", 10, &controller_base::status_callback, this);

@@ -37,6 +37,7 @@
 
     <node name="pathfollower" pkg="rosplane" type="rosplane_path_follower" output="screen">
        <remap from="state" to="truth"/>
+       <remap from="controller_commands" to="controller_commands_dev"/>
     </node>
 
     <node name="pathdeviation" pkg="rosplane" type="obstacle_deviation.py" output="screen" > </node>
