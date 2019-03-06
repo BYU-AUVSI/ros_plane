@@ -2,8 +2,11 @@
  * Written for AUVSI 2018
  * by Michael Eyler
  * 
+ * Modified for AUVSI 2019
+ * by Brandon McBride and Jacob Willis
+ * 
  * Purpose:
- * Drop a bottle when given a single input from A6 (the white wire) or an rc input on A4 (the blue wire)
+ * Drop a payload when given a single input from A6 (the white wire) or an rc input on A4 (the blue wire)
  * Pins used from left to right -->:
  * 
  * A4 RC input (White Wire)
@@ -22,8 +25,8 @@
 
 Servo h20; // Servo object
 int odroidPin = 6; // Odroid input pin is A6
-int high = 2012; 
-int low = 980; 
+int high = 2100; 
+int low = 900; 
 double pwm_low = 0.06; // Lower bound of PWM
 double pwm_high = 0.1; // Upper bound of PWM
 
@@ -37,8 +40,8 @@ void setup()
 {
   h20.attach(A5);
   h20.writeMicroseconds(low);
-  Serial.begin(115200);
-  Serial.print("Setup completed");
+//  Serial.begin(115200);
+//  Serial.println("Setup completed");
 }
 
 void loop()
@@ -49,18 +52,22 @@ void loop()
   // Look for a rising edge
   if (analogRead(odroidPin) < 50)
   {
-    isLow = true;
     delay(50);
+    if (analogRead(odroidPin) < 50)
+    {
+      isLow = true;
+    }
   }
-  else if (isLow && analogRead(odroidPin) > 340) // < 50)
+ 
+  if (isLow && analogRead(odroidPin) > 340) // < 50)
   {
-      Serial.println("Low to high transition detected");
-      Serial.println("Deploying payload");
+//      Serial.println("Low to high transition detected");
+//      Serial.println("Deploying payload");
       h20.writeMicroseconds(high);
-      delay(10);
+      delay(20);
       h20.writeMicroseconds(low);
       delay(1000);
       isLow = false;
-      Serial.println("Deployment delay complete, waiting for command...");
+//      Serial.println("Deployment delay complete, waiting for command...");
   }
 }
