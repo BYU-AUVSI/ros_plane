@@ -37,8 +37,10 @@
 
     <node name="pathfollower" pkg="rosplane" type="rosplane_path_follower" output="screen">
        <remap from="state" to="truth"/>
+       <remap from="controller_commands" to="controller_commands_dev"/>
     </node>
 
+    <node name="pathdeviation" pkg="rosplane" type="obstacle_deviation.py" output="screen" > </node>
     <!-- <node name="current_path_publisher" pkg="rostopic" type="rostopic"
       args="pub current_path rosplane_msgs/Current_Path '0' '15.0'  '[0.0, 0.0, -100.0]'  '[1.0, 0.0, 0.0]'  '[0.0, 0.0, -100.0]'  '100.0' '1'"/> -->
 

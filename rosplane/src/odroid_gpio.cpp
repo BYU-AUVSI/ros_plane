@@ -29,7 +29,7 @@ int main(int argc, char **argv)
   // setup pins
   wiringPiSetup ();
   pinMode (0, OUTPUT);
-  digitalWrite(0, LOW);
+  // digitalWrite(0, HIGH);
 
   // run ros
   rosplane::OdroidGPIO obj;

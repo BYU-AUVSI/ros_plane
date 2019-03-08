@@ -1,7 +1,10 @@
 <launch>
 
+  <arg name="record" default="false"/>
+
     <node name="naze"  pkg="rosflight"  type="rosflight_io" output="screen">
-        <param name="port" value="/dev/naze"/>
+        <!-- <param name="port" value="/dev/naze"/> -->
+        <param name="port" value="/dev/ttyACM0"/>
     </node>
 
     <node name="uINS" pkg="inertial_sense" type="inertial_sense_node" output="screen">
@@ -13,6 +16,13 @@
         <param name="~h_ref" value="1369.00"/>
     </node>
 
+    <!-- record topics for estimator tuning -->
+    <group if="$(arg record)">
+      <node name="recorder" pkg="rosbag" type="record" output="screen"
+        args="-o estimator_data /ins /gps /imu/data /baro /status /airspeed"/>
+    </group>
+
+    <!-- calibrate sensors -->
     <node pkg="rosservice" type="rosservice" name="calibration_of_imu" args="call --wait /calibrate_imu"/>
     <node pkg="rosservice" type="rosservice" name="calibration_of_baro" args="call --wait /calibrate_baro"/>
     <node pkg="rosservice" type="rosservice" name="calibration_of_airspeed" args="call --wait /calibrate_airspeed"/>
