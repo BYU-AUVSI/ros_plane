@@ -12,7 +12,8 @@
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <rosplane_msgs/State.h>
-#include <rosflight_msgs/GPS.h>
+// #include <rosflight_msgs/GPS.h>
+#include <inertial_sense/GPS.h>
 #include <sensor_msgs/Imu.h>
 #include <rosflight_msgs/Barometer.h>
 #include <rosflight_msgs/Airspeed.h>
@@ -101,8 +102,10 @@ private:
   ros::Subscriber status_sub_;
   ros::Subscriber inertial_sense_sub_;
 
+  void updateAltitudeAndAirspeed(const ros::TimerEvent &);
   void update(const ros::TimerEvent &);
-  void gpsCallback(const rosflight_msgs::GPS &msg);
+  // void gpsCallback(const rosflight_msgs::GPS &msg);
+  void gpsCallback(const inertial_sense::GPS &msg);
   void imuCallback(const sensor_msgs::Imu &msg);
   void baroAltCallback(const rosflight_msgs::Barometer &msg);
   void airspeedCallback(const rosflight_msgs::Airspeed &msg);
@@ -119,9 +122,13 @@ private:
   std::string airspeed_topic_;
   std::string status_topic_;
 
+  float lpf_static_base_;
   float lpf_diff_base_;
+  float Ve_base_;
+  float Vn_base_;
   float alpha1_base_;
   float Vahat_;
+  float hhat_;
 	float filter_taps_[FILTER_LENGTH] = {0.00970489747784546,	0.0145629416394102,	0.0282895307460455,	0.0485513149017384,
 		0.0718604720902472,	0.0941826681792385,	0.111642954778265,	0.121205220187210,	0.121205220187210,
 		0.111642954778265,	0.0941826681792385,	0.0718604720902472,	0.0485513149017384,	0.0282895307460455,
