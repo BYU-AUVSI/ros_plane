@@ -264,12 +264,19 @@ void estimator_base::gpsCallback(const inertial_sense::GPS &msg)
   }
   else
   {
+    // Extract ground speed in earth-centered, earth-fixed frame
+    double v1 = msg.velEcef.x;
+    double v2 = msg.velEcef.y;
+    double v3 = msg.velEcef.z;
+    double Vg = sqrtf(v1*v1 + v2*v2 + v3*v3);
+
+    // Calculate other fields
     input_.gps_n = EARTH_RADIUS*(msg.latitude - init_lat_)*M_PI/180.0;
     input_.gps_e = EARTH_RADIUS*cos(init_lat_*M_PI/180.0)*(msg.longitude - init_lon_)*M_PI/180.0;
     input_.gps_h = msg.altitude - init_alt_;
-    input_.gps_Vg = msg.ground_speed_3d;
-    if (msg.ground_speed_3d > 0.3)
-      input_.gps_course = msg.course;
+    input_.gps_Vg = Vg;
+    // if (msg.ground_speed_3d > 0.3)
+    //   input_.gps_course = msg.course;
     input_.gps_new = true;
   }
 }
