@@ -1,5 +1,5 @@
 #include <odroid_gpio.h>
-#include <wiringPi.h>
+//#include <wiringPi.h>
 
 namespace rosplane
 {
@@ -11,13 +11,13 @@ OdroidGPIO::OdroidGPIO():
 }
 bool OdroidGPIO::gpio0high(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res)
 {
-  digitalWrite(0,HIGH);
+  //digitalWrite(0,HIGH);
   res.success = true;
   return true;
 }
 bool OdroidGPIO::gpio0low(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res)
 {
-  digitalWrite(0,LOW);
+  //digitalWrite(0,LOW);
   res.success = true;
   return true;
 }
@@ -27,9 +27,9 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "odroid_gpio");
 
   // setup pins
-  wiringPiSetup ();
-  pinMode (0, OUTPUT);
-  // digitalWrite(0, HIGH);
+  //wiringPiSetup ();
+  //pinMode (0, OUTPUT);
+  //digitalWrite(0, LOW);
 
   // run ros
   rosplane::OdroidGPIO obj;

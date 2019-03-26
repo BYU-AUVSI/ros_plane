@@ -28,7 +28,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     ROS_FATAL_ONCE("LANDING");
 		output.delta_t = 0.0;
 		output.theta_c = 0.0*3.14159/180.0;
-		if(input.h < 10.0){
+		if(input.h < 1.0){
 			output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
 		}
 	}
