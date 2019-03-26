@@ -1,0 +1,5 @@
+<!-- This launch file controls the plane to be level. -->
+<launch>
+ <node name="bomber" pkg="rosplane" type="bomb_dropper" output="screen"/>
+ <node name="gpio_node" pkg="rosplane" type="odroid_gpio" output="screen" launch-prefix="sudo -E"/>>
+</launch>
