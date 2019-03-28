@@ -132,8 +132,12 @@ void estimator_base::inertialSenseCallback(const nav_msgs::Odometry &msg_in)
   msg.q          = msg_in.twist.twist.angular.y;
   msg.r          = msg_in.twist.twist.angular.z;
   msg.Vg         = sqrtf(Vn_base_*Vn_base_ + Ve_base_*Ve_base_);
-  msg.wn         = 0.0;
-  msg.we         = 0.0;
+
+  // use pseudo-measurement equations from uavbook to estimate the wind velocity
+  // (it's possible that we'll need to low-pass filter this)
+  msg.wn         = Vn_base_ - msg.Va * c_psi;
+  msg.we         = Ve_base_ - msg.Va * s_psi;
+
   msg.quat_valid = false;
 
   msg.psi_deg    = fmod(msg.psi, 2.0*M_PI)*180/M_PI; //-360 to 360
