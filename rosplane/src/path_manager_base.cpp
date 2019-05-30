@@ -1,5 +1,7 @@
 #include "path_manager_base.h"
 #include "path_manager_example.h"
+#include <ros/ros.h>
+#include <rosplane_msgs/Waypoint.h>
 
 namespace rosplane
 {
@@ -26,6 +28,7 @@ path_manager_base::path_manager_base():
   rx_status_sub_        = nh_.subscribe("/status", 1, &rosplane::path_manager_base::rx_callback, this);
   terminate_client_     = nh_.serviceClient<std_srvs::Trigger>("/path_manager_terminate_flight");
   save_flight_client_   = nh_.serviceClient<std_srvs::Trigger>("/path_manager_save_flight");
+  ros::Publisher new_waypoint_pub_ = nh_.advertise<rosplane_msgs::Waypoint>("/current_waypoint",1)
 
   current_path_pub_ = nh_.advertise<rosplane_msgs::Current_Path>("current_path", 10);
 
@@ -298,6 +301,10 @@ bool path_manager_base::new_waypoint_callback(rosplane_msgs::NewWaypoints::Reque
       num_waypoints_ = 1;
       idx_a_ = 0;
     }
+
+
+
+
     waypoint_s nextwp;
     nextwp.w[0]         = req.waypoints[i].w[0];
     nextwp.w[1]         = req.waypoints[i].w[1];
@@ -324,7 +331,16 @@ bool path_manager_base::new_waypoint_callback(rosplane_msgs::NewWaypoints::Reque
       idx_a_ = 0;
     }
     if (num_waypoints_ != waypoints_.size())
+    {
       ROS_FATAL("incorrect number of waypoints");
+    }
+    rosplane_msgs::Waypoint new_msg;
+    new_msg.w[0] = nextwp.w[0];
+    new_msg.w[1] = nextwp.w[1];
+    new_msg.w[2] = nextwp.w[2];
+    new_waypoint_pub_.publish(new_msg);
+
+
   }
   return true;
 }
