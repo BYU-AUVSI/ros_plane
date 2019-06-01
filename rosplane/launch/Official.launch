@@ -3,7 +3,7 @@
  <arg name="mav_name"  default="MTD"/>
  <rosparam command="load" file="$(find rosplane)/param/NPro.yaml" ns="controller"/>
  <node name="naze"  pkg="rosflight"  type="rosflight_io" output="screen">
-   <param name="port" value="/dev/naze"/>
+   <param name="port" value="/dev/ttyACM0"/>
  </node>
  <node name="uINS" pkg="inertial_sense" type="inertial_sense_node" output="screen">
   <param name="~port" value="/dev/uINS"/>
