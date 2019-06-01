@@ -1,6 +1,5 @@
 <launch>
 
   <node pkg="rosbag" type="record" name="flight"
-       args="record -o /airspeed /baro /controller_commands /controller_inners /gps /imu/data /ins /rc_raw /state /status"/>
-
+       args="record -o flight /airspeed /baro /controller_commands /controller_inners /gps /imu/data /ins /rc_raw /state /status"/>
 </launch>
