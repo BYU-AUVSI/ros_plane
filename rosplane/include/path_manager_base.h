@@ -103,6 +103,7 @@ namespace rosplane
     ros::Subscriber failsafe_sub_;            /**< RC transmitter failesafe subscription, channels */
     ros::Subscriber rx_status_sub_;           /**< RC transmitter failesafe subscription, status*/
     ros::Publisher  current_path_pub_;        /**< controller commands publication */
+    ros::Publisher new_waypoint_pub_; // added by AUVSI 2019
     ros::ServiceClient terminate_client_;
     ros::ServiceClient save_flight_client_;
     ros::ServiceServer new_waypoint_service_;

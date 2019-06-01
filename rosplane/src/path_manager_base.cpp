@@ -28,7 +28,7 @@ path_manager_base::path_manager_base():
   rx_status_sub_        = nh_.subscribe("/status", 1, &rosplane::path_manager_base::rx_callback, this);
   terminate_client_     = nh_.serviceClient<std_srvs::Trigger>("/path_manager_terminate_flight");
   save_flight_client_   = nh_.serviceClient<std_srvs::Trigger>("/path_manager_save_flight");
-  ros::Publisher new_waypoint_pub_ = nh_.advertise<rosplane_msgs::Waypoint>("/current_waypoint",1);
+  new_waypoint_pub_ = nh_.advertise<rosplane_msgs::Waypoint>("/current_waypoint",1); //added by AUVSI 2019
 
   current_path_pub_ = nh_.advertise<rosplane_msgs::Current_Path>("current_path", 10);
 
@@ -377,7 +377,7 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
   }
   current_path.rho       = output.rho;
   current_path.lambda    = output.lambda;
-	current_path.landing   = output.landing;
+  current_path.landing   = output.landing;
   current_path.drop_bomb = output.drop_bomb;
 
   current_path_pub_.publish(current_path);
