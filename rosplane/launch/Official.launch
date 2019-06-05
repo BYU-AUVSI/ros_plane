@@ -1,7 +1,7 @@
 <!--This launch file controls the plane to be level. -->
 <launch>
  <arg name="mav_name"  default="MTD"/>
- <rosparam command="load" file="$(find rosplane)/param/MTD.yaml" ns="controller"/>
+ <rosparam command="load" file="$(find rosplane)/param/NPro.yaml" ns="controller"/>
  <node name="naze"  pkg="rosflight"  type="rosflight_io" output="screen">
    <param name="port" value="/dev/ttyACM0"/>
  </node>
@@ -22,7 +22,6 @@
    <param name="~h_ref" value="0.0"/>
    -->
    <!-- Helwig Field Small, MD -->
-   <!--
    <param name="~lat_ref" value="38.3649293"/>
    <param name="~lon_ref" value="-76.5366214"/>
    <param name="~h_ref" value="0.0"/>
@@ -32,10 +31,18 @@
    <param name="~lon_ref" value="-111.6472906"/>
    <param name="~h_ref" value="0.0"/>-->
    <!-- Utah County Airfield -->
-   <param name="~lon_ref" value="-111.9019"/>
+   <!--<param name="~lon_ref" value="-111.9019"/>
    <param name="~lat_ref" value="40.3634"/>
+   <param name="~h_ref" value="0.0"/>-->
+
+   <!-- Rock Canyon Park -->
+   <!--<param name="~lat_ref" value="40.2678966681"/>
+   <param name="~lon_ref" value="-111.634524573"/>
+   <param name="~h_ref" value="10.0"/>-->
+   <!-- Elberta -->
+   <param name="~lat_ref" value="39.98304881111"/>
+   <param name="~lon_ref" value="-111.9903776"/>
    <param name="~h_ref" value="0.0"/>
-	
  </node>
 
  <node name="estimator" pkg="rosplane" type="rosplane_estimator" output="screen">
@@ -56,8 +63,8 @@
  <node name="path_follower" pkg="rosplane" type="rosplane_path_follower" output="screen"/>
 
  <node name="controller" pkg="rosplane" type="rosplane_controller" output="screen">
-   <param name="PWM_RAD_E" value="-2.8"/>
-   <param name="PWM_RAD_A" value="1.6"/>
+   <param name="PWM_RAD_E" value="2.8"/>
+   <param name="PWM_RAD_A" value="-1.6"/>
    <param name="PWM_RAD_R" value="1.8"/>
    <param name="ALT_TOZ" value="30.0"/>
    <param name="ALT_HZ" value="5.0"/>
