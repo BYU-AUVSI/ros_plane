@@ -6,7 +6,7 @@
    <param name="port" value="/dev/ttyACM0"/>
  </node>
  <node name="uINS" pkg="inertial_sense" type="inertial_sense_node" output="screen">
-  <param name="~port" value="/dev/uINS"/>
+ <param name="~port" value="/dev/uINS"/>
 
   <!-- WEBSTER FIELD -->
   <!--

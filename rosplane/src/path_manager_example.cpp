@@ -122,11 +122,16 @@ namespace rosplane
     //We check to see if the uav has entered the half space H(w_i, n_i) described in algorithm 5 line 8
     if ((p - w_i).dot(n_i) > 0.0f)
     {
+	  ROS_WARN("Transition line - wpt to wpt");
+	  ROS_WARN("hit waypoint, %d", idx_a_) ;
+	  
       //We move one step further in the waypoints. Until we reach N-1 waypoints. At that point we start again at the beginning
       if (idx_a_ == num_waypoints_ - 1)
         idx_a_ = 0;
       else
         idx_a_++;
+	  ROS_WARN("transitioning to waypoint %d", idx_a_);
+	  output_new_waypoint();
     }
   //Because we are simply using pointers, there is no need to "return" a value. Therefore this function is fine to return type void.
   }
@@ -218,8 +223,11 @@ namespace rosplane
       output.drop_bomb = waypoints_[idx_b].drop_bomb;
 
       //if plane has crossed first half plane (ie it needs to start the fillet), change state to ORBIT
-      if ((p - z).dot(q_im1) > 0)
+      if ((p - z).dot(q_im1) > 0) {
+
+		ROS_WARN("Transition orbit -> straight");
         fil_state_ = fillet_state::ORBIT;
+	  }
       break;
     case fillet_state::ORBIT:  //this is when the plane follows the orbit that defines the fillet
       //implement lines 15-25 in UAVbook pg 193
@@ -263,11 +271,15 @@ namespace rosplane
       //If the second half plane is crossed, change state to STRAIGHT
       if ((p - z).dot(q_i) > 0)
       {
+		  ROS_WARN("hit waypoint, %d", idx_a_) ;
         if (idx_a_ == num_waypoints_ - 1)
           idx_a_ = 0;
         else
           idx_a_++;
         fil_state_ = fillet_state::STRAIGHT;
+		ROS_WARN("Transition orbit -> straight");
+	  ROS_WARN("transitioning to waypoint %d", idx_a_);
+		output_new_waypoint();
       }
       break;
     }
@@ -314,5 +326,33 @@ namespace rosplane
       return true;
     else
       return false;
+  }
+
+  void path_manager_example::output_new_waypoint(){
+    int idx_b;
+    int idx_c;
+    if (idx_a_ == num_waypoints_ - 1)
+    {
+      idx_b = 0;
+      idx_c = 1;
+    }
+    else if (idx_a_ == num_waypoints_ - 2)
+    {
+      idx_b = num_waypoints_ - 1;
+      idx_c = 0;
+    }
+    else
+    {
+      idx_b = idx_a_ + 1;
+      idx_c = idx_b + 1;
+    }
+    waypoint_s nextwp;
+	nextwp = waypoints_[idx_b];
+
+    rosplane_msgs::Waypoint new_msg;
+    new_msg.w[0] = nextwp.w[0];
+    new_msg.w[1] = nextwp.w[1];
+    new_msg.w[2] = nextwp.w[2];
+    new_waypoint_pub_.publish(new_msg);
   }
 }//end namespace

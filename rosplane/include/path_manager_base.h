@@ -94,6 +94,8 @@ namespace rosplane
 
     virtual void manage(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
+
+    ros::Publisher new_waypoint_pub_; // added by AUVSI 2019
   private:
 
     ros::NodeHandle nh_;

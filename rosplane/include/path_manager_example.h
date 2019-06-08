@@ -43,6 +43,7 @@ namespace rosplane
 
     void manage_line(const struct params_s &params, const struct input_s &input, struct output_s &output);
     void manage_fillet(const struct params_s &params, const struct input_s &input, struct output_s &output);
+	void output_new_waypoint();
 
     float loiter_radius_;
     float groundD_;
