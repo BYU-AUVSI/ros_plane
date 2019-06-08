@@ -301,10 +301,6 @@ bool path_manager_base::new_waypoint_callback(rosplane_msgs::NewWaypoints::Reque
       num_waypoints_ = 1;
       idx_a_ = 0;
     }
-
-
-
-
     waypoint_s nextwp;
     nextwp.w[0]         = req.waypoints[i].w[0];
     nextwp.w[1]         = req.waypoints[i].w[1];
@@ -334,13 +330,6 @@ bool path_manager_base::new_waypoint_callback(rosplane_msgs::NewWaypoints::Reque
     {
       ROS_FATAL("incorrect number of waypoints");
     }
-    //rosplane_msgs::Waypoint new_msg;
-    //new_msg.w[0] = nextwp.w[0];
-    //new_msg.w[1] = nextwp.w[1];
-    //new_msg.w[2] = nextwp.w[2];
-    //new_waypoint_pub_.publish(new_msg);
-
-
   }
   return true;
 }
