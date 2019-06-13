@@ -4,23 +4,23 @@
  <!-- ====================== -->
  <!-- LOAD TUNING PARAMETERS -->
  <!-- ====================== -->
- 
+
  <rosparam command="load" file="$(find rosplane)/param/NPro.yaml" ns="controller"/>
 
  <!-- =================================== -->
  <!-- LAUNCH ROSFLIGHT AND INERTIAL SENSE -->
  <!-- =================================== -->
- 
+
  <node name="naze"  pkg="rosflight"  type="rosflight_io" output="screen">
    <param name="port" value="/dev/ttyACM0"/>
  </node>
  <node name="uINS" pkg="inertial_sense" type="inertial_sense_node" output="screen">
  <param name="~port" value="/dev/uINS"/>
-  
+
    <!-- ============================================ -->
    <!-- SET REFERENCE LAT/LON/ALT FOR INERTIAL SENSE -->
    <!-- ============================================ -->
-   
+
    <!-- WEBSTER FIELD -->
    <!--
    <param name="~lat_ref" value="38.144692"/>
@@ -84,9 +84,9 @@
   <param name="R_min" value="50.0"/>
   <param name="loiter_radius" value="75.0"/>
   <param name="groundD" value="-6.7056"/>
-  <param name="home_north" value="-100.0"/>
-  <param name="home_east" value="-100.0"/>
-  <param name="loiter_down" value="-150.0"/>
+  <param name="home_north" value="0.0"/>
+  <param name="home_east" value="0.0"/>
+  <param name="loiter_down" value="-50.0"/>
  </node>
 
  <!-- ================== -->
@@ -119,7 +119,7 @@
  <!-- ============================ -->
  <!-- INTEROP CUTOUT FAILSAFE NODE -->
  <!-- ============================ -->
- 
+
  <node name="failsafe" pkg="rosplane" type="failsafe.py" output="screen"/>
 
  <!-- ================================ -->

@@ -40,7 +40,7 @@ path_manager_base::path_manager_base():
 }
 void path_manager_base::failsafe_callback(const rosflight_msgs::RCRaw &msg) // state machine
 {
-  switch_us_ = msg.values[6];
+  switch_us_ = msg.values[7];
   if (switch_found_ == false)
   {
     if (switch_us_ >= 975 && switch_us_ < 1333)

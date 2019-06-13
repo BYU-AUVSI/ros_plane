@@ -24,8 +24,7 @@ namespace rosplane
       nh_private_.param<float>("home_north", home_north, 0.0);
       nh_private_.param<float>("home_east", home_east, 0.0);
       nh_private_.param<float>("loiter_down", loiter_down, -50.0);
-      ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about the following point at Va = 15 m/s:");
-      std::cout << "(" << home_north << ", " << home_east << ", " << loiter_down << ")" << std::endl;
+      ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about (home_north, home_east, loiter_down) at Va = 15 m/s.");
       output.flag = false;
       output.Va_d = 15;
       output.c[0] = home_north;
