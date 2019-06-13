@@ -22,7 +22,7 @@ namespace rosplane
     {
       ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
       output.flag = false;
-      output.Va_d = 12;
+      output.Va_d = 15;
       output.c[0] = 0.0f;
       output.c[1] = 0.0f;
       output.c[2] = -50.0f;
