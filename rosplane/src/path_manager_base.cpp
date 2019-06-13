@@ -64,14 +64,15 @@ void path_manager_base::rx_callback(const rosflight_msgs::Status &msg)
 {
   if (switch_found_)
   {
-    if (msg.rc_override == false && msg.failsafe == false)
+    // if (msg.rc_override == false && msg.failsafe == false)
+    if (msg.failsafe == false)
     {
       flight_mode_state switch_state;
-      if (switch_us_ >= 975 && switch_us_ < 1333)
+      if (switch_us_ >= 0 && switch_us_ < 100)
         switch_state = flight_mode_state::FLY;
-      else if (switch_us_ >= 1333 && switch_us_ < 1666)
+      else if (switch_us_ >= 450 && switch_us_ < 550)
         switch_state = flight_mode_state::RETURN_TO_HOME;
-      else if (switch_us_ >= 1666 && switch_us_ <= 2025)
+      else if (switch_us_ >= 950 && switch_us_ <= 1050)
         switch_state = flight_mode_state::TERMINATE_FLIGHT;
       if (switch_state != switch_state_)
       {
