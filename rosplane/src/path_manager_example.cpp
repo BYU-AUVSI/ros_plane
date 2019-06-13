@@ -35,7 +35,7 @@ namespace rosplane
       output.landing = false;
       output.drop_bomb = false;
     }
-    else
+    else if (!rc_override_)
     {
       /** Switch the following for flying directly to waypoints, or filleting corners */
       //manage_line(params, input, output);

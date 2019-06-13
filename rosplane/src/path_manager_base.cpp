@@ -15,6 +15,7 @@ path_manager_base::path_manager_base():
   waypoints_saved_in_queue_   = false;
   switch_us_                  = 1;
   switch_found_               = false;
+  rc_override_                = true;
   nh_private_.param<double>("R_min", params_.R_min, 75.0);
   nh_private_.param<double>("update_rate", update_rate_, 10.0);
 
@@ -62,6 +63,7 @@ void path_manager_base::failsafe_callback(const rosflight_msgs::RCRaw &msg) // s
 }
 void path_manager_base::rx_callback(const rosflight_msgs::Status &msg)
 {
+  rc_override_ = msg.rc_override;
   if (switch_found_)
   {
     // if (msg.rc_override == false && msg.failsafe == false)

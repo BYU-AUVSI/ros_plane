@@ -98,6 +98,7 @@ namespace rosplane
     ros::Publisher new_waypoint_pub_; // added by AUVSI 2019
   protected:
     ros::NodeHandle nh_private_;
+    bool rc_override_;
 
   private:
 
