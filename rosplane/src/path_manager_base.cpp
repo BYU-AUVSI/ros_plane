@@ -43,11 +43,11 @@ void path_manager_base::failsafe_callback(const rosflight_msgs::RCRaw &msg) // s
   switch_us_ = msg.values[7];
   if (switch_found_ == false)
   {
-    if (switch_us_ >= 975 && switch_us_ < 1333)
+    if (switch_us_ >= 0 && switch_us_ < 100)
       switch_state_ = flight_mode_state::FLY;
-    else if (switch_us_ >= 1333 && switch_us_ < 1666)
+    else if (switch_us_ >= 450 && switch_us_ < 550)
       switch_state_ = flight_mode_state::RETURN_TO_HOME;
-    else if (switch_us_ >= 1666 && switch_us_ <= 2025)
+    else if (switch_us_ >= 950 && switch_us_ <= 1050)
       switch_state_ = flight_mode_state::TERMINATE_FLIGHT;
     else
       return;
