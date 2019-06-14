@@ -158,9 +158,9 @@ void path_manager_base::rthWaypoints()
       Va               = 20.0;
 
     float home_north, home_east, loiter_down;
-    nh_private_.param<float>("home_north", home_north, 0.0);
-    nh_private_.param<float>("home_east", home_east, 0.0);
-    nh_private_.param<float>("loiter_down", loiter_down, -50.0);
+    nh_private_.param<float>("RTH_north", home_north, 0.0);
+    nh_private_.param<float>("RTH_east", home_east, 0.0);
+    nh_private_.param<float>("RTH_down", loiter_down, -50.0);
 
     // give it new waypoints
     waypoints_.clear();

@@ -87,6 +87,9 @@
   <param name="home_north" value="0.0"/>
   <param name="home_east" value="0.0"/>
   <param name="loiter_down" value="-50.0"/>
+  <param name="RTH_north" value="-36.63"/>
+  <param name="RTH_east" value="3.27"/>
+  <param name="RTH_down" value="-50.0"/>
  </node>
 
  <!-- ================== -->
