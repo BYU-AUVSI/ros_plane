@@ -113,10 +113,9 @@
  </node>
 
  <!-- =============== -->
- <!-- BOMB DROP NODES -->
+ <!-- GPIO OUTPUT NODE -->
  <!-- =============== -->
 
- <node name="bomber" pkg="rosplane" type="bomb_dropper" output="screen"/>
  <node name="gpio_node" pkg="rosplane" type="odroid_gpio" output="screen" launch-prefix="sudo -E"/>
 
  <!-- ============================ -->
