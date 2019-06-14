@@ -357,6 +357,12 @@ namespace rosplane
     new_msg.w[0] = nextwp.w[0];
     new_msg.w[1] = nextwp.w[1];
     new_msg.w[2] = nextwp.w[2];
+	new_msg.Va_d = nextwp.Va_d;
+	new_msg.drop_bomb = nextwp.drop_bomb;
+	new_msg.landing = nextwp.landing;
+	new_msg.priority = nextwp.priority;
+	new_msg.loiter_point = nextwp.loiter_point;
+
     new_waypoint_pub_.publish(new_msg);
   }
 }//end namespace
