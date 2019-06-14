@@ -20,18 +20,22 @@ namespace rosplane
 
     if (num_waypoints_ < 2)
     {
-      ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
+      float home_north, home_east, loiter_down;
+      nh_private_.param<float>("home_north", home_north, 0.0);
+      nh_private_.param<float>("home_east", home_east, 0.0);
+      nh_private_.param<float>("loiter_down", loiter_down, -50.0);
+      ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about (home_north, home_east, loiter_down) at Va = 15 m/s.");
       output.flag = false;
-      output.Va_d = 12;
-      output.c[0] = 0.0f;
-      output.c[1] = 0.0f;
-      output.c[2] = -50.0f;
+      output.Va_d = 15;
+      output.c[0] = home_north;
+      output.c[1] = home_east;
+      output.c[2] = loiter_down;
       output.rho = params.R_min;
       output.lambda = 1;
       output.landing = false;
       output.drop_bomb = false;
     }
-    else
+    else if (!rc_override_)
     {
       /** Switch the following for flying directly to waypoints, or filleting corners */
       //manage_line(params, input, output);
@@ -124,7 +128,7 @@ namespace rosplane
     {
 	  ROS_WARN("Transition line - wpt to wpt");
 	  ROS_WARN("hit waypoint, %d", idx_a_) ;
-	  
+
       //We move one step further in the waypoints. Until we reach N-1 waypoints. At that point we start again at the beginning
       if (idx_a_ == num_waypoints_ - 1)
         idx_a_ = 0;

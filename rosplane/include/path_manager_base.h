@@ -96,10 +96,14 @@ namespace rosplane
 
 
     ros::Publisher new_waypoint_pub_; // added by AUVSI 2019
+  protected:
+    ros::NodeHandle nh_private_;
+    bool rc_override_;
+
   private:
 
     ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
+
     ros::Subscriber vehicle_state_sub_;       /**< vehicle state subscription */
     ros::Subscriber new_waypoint_sub_;        /**< new waypoint subscription */
     ros::Subscriber failsafe_sub_;            /**< RC transmitter failesafe subscription, channels */

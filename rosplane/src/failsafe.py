@@ -31,7 +31,7 @@ class failsafe():
 
         # Subscribe to state to see the RC status inputs
         self.RC_sub = rospy.Subscriber("status", Status, self.statusCallback)
-    
+
     def testInterop(self):
         """Tests the interop system for downtime"""
         if not self.isInteropAlive(): # If interop is not alive
@@ -45,7 +45,7 @@ class failsafe():
         else: # Not in failsafe
             self.wasInteropAlive = True
             self.resetFailsafe()
-        
+
 
     def statusCallback(self, msg):
         """Status message callback. Tests for RC downtime. \n\nIs automatically called when the state topic is updated"""
@@ -64,7 +64,7 @@ class failsafe():
 
     def testElapsedTime(self, elapsedTime):
         """Tests a given elapsed time to see if a failsafe should be called
-        
+
         Keyword arguments:
         elapsedTime -- The time that has elapsed, in seconds
         """
@@ -76,7 +76,7 @@ class failsafe():
             self.calledTerminate = True
             rospy.logerr("TRIGGERING FAILSAFE: TERMINATE")
             self.terminateService()
-    
+
 
     def resetFailsafe(self):
         """Resets previously called RTH (but not terminate) failsafes if RC and Interop are now alive"""
@@ -86,11 +86,11 @@ class failsafe():
             if self.calledTerminate: # if terminate had been called
                 self.resumeService()
                 # May be a good idea to only call if it's still in the air
-            
+
             # Reset all of the default values
             self.calledRTH = False
             self.calledTerminate = False
-    
+
 
     def isInteropAlive(self):
         """One time check to see if the interop system is alive."""

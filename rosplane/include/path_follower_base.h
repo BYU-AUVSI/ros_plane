@@ -63,9 +63,11 @@ protected:
 
   virtual void follow(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
+protected:
+  ros::NodeHandle nh_private_;
+
 private:
   ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
   ros::Subscriber vehicle_state_sub_;
   ros::Subscriber current_path_sub_;
 

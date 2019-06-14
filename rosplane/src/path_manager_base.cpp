@@ -15,6 +15,7 @@ path_manager_base::path_manager_base():
   waypoints_saved_in_queue_   = false;
   switch_us_                  = 1;
   switch_found_               = false;
+  rc_override_                = true;
   nh_private_.param<double>("R_min", params_.R_min, 75.0);
   nh_private_.param<double>("update_rate", update_rate_, 10.0);
 
@@ -40,14 +41,14 @@ path_manager_base::path_manager_base():
 }
 void path_manager_base::failsafe_callback(const rosflight_msgs::RCRaw &msg) // state machine
 {
-  switch_us_ = msg.values[6];
+  switch_us_ = msg.values[7];
   if (switch_found_ == false)
   {
-    if (switch_us_ >= 975 && switch_us_ < 1333)
+    if (switch_us_ >= 0 && switch_us_ < 100)
       switch_state_ = flight_mode_state::FLY;
-    else if (switch_us_ >= 1333 && switch_us_ < 1666)
+    else if (switch_us_ >= 450 && switch_us_ < 550)
       switch_state_ = flight_mode_state::RETURN_TO_HOME;
-    else if (switch_us_ >= 1666 && switch_us_ <= 2025)
+    else if (switch_us_ >= 950 && switch_us_ <= 1050)
       switch_state_ = flight_mode_state::TERMINATE_FLIGHT;
     else
       return;
@@ -62,16 +63,18 @@ void path_manager_base::failsafe_callback(const rosflight_msgs::RCRaw &msg) // s
 }
 void path_manager_base::rx_callback(const rosflight_msgs::Status &msg)
 {
+  rc_override_ = msg.rc_override;
   if (switch_found_)
   {
-    if (msg.rc_override == false && msg.failsafe == false)
+    // if (msg.rc_override == false && msg.failsafe == false)
+    if (msg.failsafe == false)
     {
       flight_mode_state switch_state;
-      if (switch_us_ >= 975 && switch_us_ < 1333)
+      if (switch_us_ >= 0 && switch_us_ < 100)
         switch_state = flight_mode_state::FLY;
-      else if (switch_us_ >= 1333 && switch_us_ < 1666)
+      else if (switch_us_ >= 450 && switch_us_ < 550)
         switch_state = flight_mode_state::RETURN_TO_HOME;
-      else if (switch_us_ >= 1666 && switch_us_ <= 2025)
+      else if (switch_us_ >= 950 && switch_us_ <= 1050)
         switch_state = flight_mode_state::TERMINATE_FLIGHT;
       if (switch_state != switch_state_)
       {
@@ -155,9 +158,9 @@ void path_manager_base::rthWaypoints()
       Va               = 20.0;
 
     float home_north, home_east, loiter_down;
-    nh_private_.param<float>("home_north", home_north, 0.0);
-    nh_private_.param<float>("home_east", home_east, 0.0);
-    nh_private_.param<float>("loiter_down", loiter_down, -150.0);
+    nh_private_.param<float>("RTH_north", home_north, 0.0);
+    nh_private_.param<float>("RTH_east", home_east, 0.0);
+    nh_private_.param<float>("RTH_down", loiter_down, -50.0);
 
     // give it new waypoints
     waypoints_.clear();

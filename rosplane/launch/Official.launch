@@ -1,20 +1,32 @@
 <!--This launch file controls the plane to be level. -->
 <launch>
- <arg name="mav_name"  default="MTD"/>
+
+ <!-- ====================== -->
+ <!-- LOAD TUNING PARAMETERS -->
+ <!-- ====================== -->
+
  <rosparam command="load" file="$(find rosplane)/param/NPro.yaml" ns="controller"/>
+
+ <!-- =================================== -->
+ <!-- LAUNCH ROSFLIGHT AND INERTIAL SENSE -->
+ <!-- =================================== -->
+
  <node name="naze"  pkg="rosflight"  type="rosflight_io" output="screen">
    <param name="port" value="/dev/ttyACM0"/>
  </node>
  <node name="uINS" pkg="inertial_sense" type="inertial_sense_node" output="screen">
  <param name="~port" value="/dev/uINS"/>
 
-  <!-- WEBSTER FIELD -->
-  <!--
+   <!-- ============================================ -->
+   <!-- SET REFERENCE LAT/LON/ALT FOR INERTIAL SENSE -->
+   <!-- ============================================ -->
+
+   <!-- WEBSTER FIELD -->
+   <!--
    <param name="~lat_ref" value="38.144692"/>
    <param name="~lon_ref" value="-76.428007"/>
    <param name="~h_ref" value="0.0"/>
-  -->
-
+   -->
    <!-- Helwig Field Big, MD -->
    <!--
    <param name="~lat_ref" value="38.367192"/>
@@ -28,44 +40,71 @@
    <param name="~h_ref" value="0.0"/>
    -->
    <!-- Engineering Building Lawn, BYU -->
-   <!--<param name="~lat_ref" value="40.2462589"/>
+   <!--
+   <param name="~lat_ref" value="40.2462589"/>
    <param name="~lon_ref" value="-111.6472906"/>
-   <param name="~h_ref" value="0.0"/>-->
+   <param name="~h_ref" value="0.0"/>
+   -->
    <!-- Utah County Airfield -->
-   <!--<param name="~lon_ref" value="-111.9019"/>
+   <!--
+   <param name="~lon_ref" value="-111.9019"/>
    <param name="~lat_ref" value="40.3634"/>
    <param name="~h_ref" value="0.0"/>-->
-
    <!-- Rock Canyon Park -->
-   <!--<param name="~lat_ref" value="40.2678966681"/>
+   <!--
+   <param name="~lat_ref" value="40.2678966681"/>
    <param name="~lon_ref" value="-111.634524573"/>
    <param name="~h_ref" value="10.0"/>-->
    <!-- Elberta -->
+   <!--
    <param name="~lat_ref" value="39.98304881111"/>
    <param name="~lon_ref" value="-111.9903776"/>
    <param name="~h_ref" value="0.0"/>
+   -->
+   <!-- Chaptico Park -->
+   <param name="~lat_ref" value="38.379318"/>
+   <param name="~lon_ref" value="-76.805290"/>
+   <param name="~h_ref" value="0.0"/>
+
  </node>
+
+ <!-- ============== -->
+ <!-- ESTIMATOR NODE -->
+ <!-- ============== -->
 
  <node name="estimator" pkg="rosplane" type="rosplane_estimator" output="screen">
    <param name="~use_inertial_sense" type="bool" value="true"/>
  </node>
 
- <!--Path Manager-->
+ <!-- ================= -->
+ <!-- PATH MANAGER NODE -->
+ <!-- ================= -->
+
  <node name="path_manager" pkg="rosplane" type="rosplane_path_manager" output="screen">
   <param name="R_min" value="50.0"/>
   <param name="loiter_radius" value="75.0"/>
   <param name="groundD" value="-6.7056"/>
-  <param name="home_north" value="-100.0"/>
-  <param name="home_east" value="-100.0"/>
-  <param name="loiter_down" value="-150.0"/>
+  <param name="home_north" value="0.0"/>
+  <param name="home_east" value="0.0"/>
+  <param name="loiter_down" value="-50.0"/>
+  <param name="RTH_north" value="-36.63"/>
+  <param name="RTH_east" value="3.27"/>
+  <param name="RTH_down" value="-50.0"/>
  </node>
 
- <!--Path Follower-->
+ <!-- ================== -->
+ <!-- PATH FOLLOWER NODE -->
+ <!-- ================== -->
+
  <node name="path_follower" pkg="rosplane" type="rosplane_path_follower" output="screen"/>
 
+ <!-- =============== -->
+ <!-- CONTROLLER NODE -->
+ <!-- =============== -->
+
  <node name="controller" pkg="rosplane" type="rosplane_controller" output="screen">
-   <param name="PWM_RAD_E" value="2.8"/>
-   <param name="PWM_RAD_A" value="-1.6"/>
+   <param name="PWM_RAD_E" value="2.8"/> <!-- RIGHT SIGN???? -->
+   <param name="PWM_RAD_A" value="-1.6"/> <!-- RIGHT SIGN???? -->
    <param name="PWM_RAD_R" value="1.8"/>
    <param name="ALT_TOZ" value="30.0"/>
    <param name="ALT_HZ" value="5.0"/>
@@ -73,11 +112,24 @@
    <param name="groundD" value="-6.7056"/>
  </node>
 
+ <!-- =============== -->
+ <!-- GPIO OUTPUT NODE -->
+ <!-- =============== -->
+
  <node name="gpio_node" pkg="rosplane" type="odroid_gpio" output="screen" launch-prefix="sudo -E"/>
 
+ <!-- ============================ -->
+ <!-- INTEROP CUTOUT FAILSAFE NODE -->
+ <!-- ============================ -->
+
  <node name="failsafe" pkg="rosplane" type="failsafe.py" output="screen"/>
+
+ <!-- ================================ -->
+ <!-- SENSOR CALIBRATION SERVICE CALLS -->
+ <!-- ================================ -->
 
  <node pkg="rosservice" type="rosservice" name="calibration_of_imu" args="call --wait /calibrate_imu"/>
  <node pkg="rosservice" type="rosservice" name="calibration_of_baro" args="call --wait /calibrate_baro"/>
  <node pkg="rosservice" type="rosservice" name="calibration_of_airspeed" args="call --wait /calibrate_airspeed"/>
+
 </launch>
