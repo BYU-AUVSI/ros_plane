@@ -13,6 +13,7 @@ namespace rosplane
   private:
     ros::NodeHandle nh_;
 
+    ros::ServiceServer gpio_0_pulse_actuate_srv_;
     ros::ServiceServer gpio_0_high_srv_;
     ros:: ServiceServer gpio_0_low_srv_;
     bool gpio0high(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
