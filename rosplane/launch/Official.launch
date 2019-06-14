@@ -73,6 +73,8 @@
    <param name="groundD" value="-6.7056"/>
  </node>
 
+ <node name="gpio_node" pkg="rosplane" type="odroid_gpio" output="screen" launch-prefix="sudo -E"/>
+
  <node name="failsafe" pkg="rosplane" type="failsafe.py" output="screen"/>
 
  <node pkg="rosservice" type="rosservice" name="calibration_of_imu" args="call --wait /calibrate_imu"/>
