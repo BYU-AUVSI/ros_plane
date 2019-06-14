@@ -18,6 +18,7 @@ namespace rosplane
     ros:: ServiceServer gpio_0_low_srv_;
     bool gpio0high(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
     bool gpio0low(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
+    bool gpio0pulseActuate(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
   };
 } //end namespace rosplane
 #endif // ODROID_GPIO_H
