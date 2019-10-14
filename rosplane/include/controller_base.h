@@ -1,194 +1,144 @@
-#include "controller_base.h"
-#include "controller_example.h"
+/**
+ * @file controller_base.h
+ *
+ * Base class definition for autopilot controller in chapter 6 of UAVbook, see http://uavbook.byu.edu/doku.php
+ *
+ * @author Gary Ellingson <gary.ellingson@byu.edu>
+ */
+
+#ifndef CONTROLLER_BASE_H
+#define CONTROLLER_BASE_H
+
+#include <ros/ros.h>
+#include <rosflight_msgs/Command.h>
+#include <rosplane_msgs/State.h>
+#include <rosplane_msgs/Controller_Commands.h>
+#include <rosplane_msgs/Controller_Internals.h>
+
+#include <dynamic_reconfigure/server.h>
+#include <rosplane/ControllerConfig.h>
 
 namespace rosplane
 {
 
-controller_base::controller_base():
-  nh_(),
-  nh_private_("~")
+enum class alt_zones
 {
-  vehicle_state_sub_ = nh_.subscribe("state", 10, &controller_base::vehicle_state_callback, this);
-  controller_commands_sub_ = nh_.subscribe("controller_commands", 10, &controller_base::controller_commands_callback,
-                             this);
+  TAKE_OFF,
+  CLIMB,
+  DESCEND,
+  ALTITUDE_HOLD
+};
 
-  memset(&vehicle_state_, 0, sizeof(vehicle_state_));
-  memset(&controller_commands_, 0, sizeof(controller_commands_));
-
-  nh_private_.param<double>("TRIM_E", params_.trim_e, 0.0);
-  nh_private_.param<double>("TRIM_A", params_.trim_a, 0.0);
-  nh_private_.param<double>("TRIM_R", params_.trim_r, 0.0);
-  nh_private_.param<double>("TRIM_T", params_.trim_t, 0.6);
-  nh_private_.param<double>("PWM_RAD_E", params_.pwm_rad_e, 1.0);
-  nh_private_.param<double>("PWM_RAD_A", params_.pwm_rad_a, 1.0);
-  nh_private_.param<double>("PWM_RAD_R", params_.pwm_rad_r, 1.0);
-  nh_private_.param<double>("ALT_TOZ", params_.alt_toz, 20.0);
-  nh_private_.param<double>("ALT_HZ", params_.alt_hz, 10.0);
-  nh_private_.param<double>("TAU", params_.tau, 5.0);
-  nh_private_.param<double>("COURSE_KP", params_.c_kp, 0.7329);
-  nh_private_.param<double>("COURSE_KD", params_.c_kd, 0.0);
-  nh_private_.param<double>("COURSE_KI", params_.c_ki, 0.0);
-  nh_private_.param<double>("ROLL_KP", params_.r_kp, 1.2855);
-  nh_private_.param<double>("ROLL_KD", params_.r_kd, -0.325);
-  nh_private_.param<double>("ROLL_KI", params_.r_ki, 0.0);//0.10f);
-  nh_private_.param<double>("PITCH_KP", params_.p_kp, 1.0);
-  nh_private_.param<double>("PITCH_KD", params_.p_kd, -0.17);
-  nh_private_.param<double>("PITCH_KI", params_.p_ki, 0.0);
-  nh_private_.param<double>("PITCH_FF", params_.p_ff, 0.0);
-  nh_private_.param<double>("AS_PITCH_KP", params_.a_p_kp, -0.0713);
-  nh_private_.param<double>("AS_PITCH_KD", params_.a_p_kd, -0.0635);
-  nh_private_.param<double>("AS_PITCH_KI", params_.a_p_ki, 0.0);
-  nh_private_.param<double>("AS_THR_KP", params_.a_t_kp, 3.2);
-  nh_private_.param<double>("AS_THR_KD", params_.a_t_kd, 0.0);
-  nh_private_.param<double>("AS_THR_KI", params_.a_t_ki, 0.0);
-  nh_private_.param<double>("ALT_KP", params_.a_kp, 0.045);
-  nh_private_.param<double>("ALT_KD", params_.a_kd, 0.0);
-  nh_private_.param<double>("ALT_KI", params_.a_ki, 0.01);
-  nh_private_.param<double>("BETA_KP", params_.b_kp, -0.1164);
-  nh_private_.param<double>("BETA_KD", params_.b_kd, 0.0);
-  nh_private_.param<double>("BETA_KI", params_.b_ki, -0.0037111);
-  nh_private_.param<double>("MAX_E", params_.max_e, 0.610);
-  nh_private_.param<double>("MAX_A", params_.max_a, 0.523);
-  nh_private_.param<double>("MAX_R", params_.max_r, 0.523);
-  nh_private_.param<double>("MAX_T", params_.max_t, 1.0);
-
-  func_ = boost::bind(&controller_base::reconfigure_callback, this, _1, _2);
-  server_.setCallback(func_);
-
-  actuators_pub_ = nh_.advertise<rosflight_msgs::Command>("command", 10);
-  internals_pub_ = nh_.advertise<rosplane_msgs::Controller_Internals>("controller_inners", 10);
-  act_pub_timer_ = nh_.createTimer(ros::Duration(1.0/100.0), &controller_base::actuator_controls_publish, this);
-
-  command_recieved_ = false;
-}
-
-void controller_base::vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg)
+class controller_base
 {
-  vehicle_state_ = *msg;
-}
+public:
+  controller_base();
+  float spin();
 
-void controller_base::controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg)
-{
-  command_recieved_ = true;
-  controller_commands_ = *msg;
-}
+protected:
 
-void controller_base::reconfigure_callback(rosplane::ControllerConfig &config, uint32_t level)
-{
-  params_.trim_e = config.TRIM_E;
-  params_.trim_a = config.TRIM_A;
-  params_.trim_r = config.TRIM_R;
-  params_.trim_t = config.TRIM_T;
-
-  params_.c_kp = config.COURSE_KP;
-  params_.c_kd = config.COURSE_KD;
-  params_.c_ki = config.COURSE_KI;
-
-  params_.r_kp = config.ROLL_KP;
-  params_.r_kd = config.ROLL_KD;
-  params_.r_ki = config.ROLL_KI;
-
-  params_.p_kp = config.PITCH_KP;
-  params_.p_kd = config.PITCH_KD;
-  params_.p_ki = config.PITCH_KI;
-  params_.p_ff = config.PITCH_FF;
-
-  params_.a_p_kp = config.AS_PITCH_KP;
-  params_.a_p_kd = config.AS_PITCH_KD;
-  params_.a_p_ki = config.AS_PITCH_KI;
-
-  params_.a_t_kp = config.AS_THR_KP;
-  params_.a_t_kd = config.AS_THR_KD;
-  params_.a_t_ki = config.AS_THR_KI;
-
-  params_.a_kp = config.ALT_KP;
-  params_.a_kd = config.ALT_KD;
-  params_.a_ki = config.ALT_KI;
-
-  params_.b_kp = config.BETA_KP;
-  params_.b_kd = config.BETA_KD;
-  params_.b_ki = config.BETA_KI;
-}
-
-void controller_base::convert_to_pwm(controller_base::output_s &output)
-{
-  output.delta_e = output.delta_e*params_.pwm_rad_e;
-  output.delta_a = output.delta_a*params_.pwm_rad_a;
-  output.delta_r = output.delta_r*params_.pwm_rad_r;
-}
-
-void controller_base::actuator_controls_publish(const ros::TimerEvent &)
-{
-  struct input_s input;
-  input.h = -vehicle_state_.position[2];
-  input.va = vehicle_state_.Va;
-  input.phi = vehicle_state_.phi;
-  input.theta = vehicle_state_.theta;
-  input.chi = vehicle_state_.chi;
-  input.p = vehicle_state_.p;
-  input.q = vehicle_state_.q;
-  input.r = vehicle_state_.r;
-  input.Va_c = controller_commands_.Va_c;
-  input.h_c = controller_commands_.h_c;
-  input.chi_c = controller_commands_.chi_c;
-  input.phi_ff = controller_commands_.phi_ff;
-  input.Ts = 0.01f;
-
-  struct output_s output;
-  if (command_recieved_ == true)
+  struct input_s
   {
-    control(params_, input, output);
+    float Ts;               /** time step */
+    float h;                /** altitude */
+    float va;               /** airspeed */
+    float phi;              /** roll angle */
+    float theta;            /** pitch angle */
+    float chi;              /** course angle */
+    float p;                /** body frame roll rate */
+    float q;                /** body frame pitch rate */
+    float r;                /** body frame yaw rate */
+    float Va_c;             /** commanded airspeed (m/s) */
+    float h_c;              /** commanded altitude (m) */
+    float chi_c;            /** commanded course (rad) */
+    float phi_ff;           /** feed forward term for orbits (rad) */
+  };
 
-    convert_to_pwm(output);
+  struct output_s
+  {
+    float theta_c;
+    float delta_e;
+    float phi_c;
+    float delta_a;
+    float delta_r;
+    float delta_t;
+    alt_zones current_zone;
+  };
 
-    rosflight_msgs::Command actuators;
-    /* publish actuator controls */
+  struct params_s
+  {
+    double alt_hz;           /**< altitude hold zone */
+    double alt_toz;          /**< altitude takeoff zone */
+    double tau;
+    double c_kp;
+    double c_kd;
+    double c_ki;
+    double r_kp;
+    double r_kd;
+    double r_ki;
+    double p_kp;
+    double p_kd;
+    double p_ki;
+    double p_ff;
+    double a_p_kp;
+    double a_p_kd;
+    double a_p_ki;
+    double a_t_kp;
+    double a_t_kd;
+    double a_t_ki;
+    double a_kp;
+    double a_kd;
+    double a_ki;
+    double b_kp;
+    double b_kd;
+    double b_ki;
+    double trim_e;
+    double trim_a;
+    double trim_r;
+    double trim_t;
+    double max_e;
+    double max_a;
+    double max_r;
+    double max_t;
+    double pwm_rad_e;
+    double pwm_rad_a;
+    double pwm_rad_r;
+  };
 
-    actuators.ignore = 0;
-    actuators.mode = rosflight_msgs::Command::MODE_PASS_THROUGH;
-    actuators.x = output.delta_a;//(isfinite(output.delta_a)) ? output.delta_a : 0.0f;
-    actuators.y = output.delta_e;//(isfinite(output.delta_e)) ? output.delta_e : 0.0f;
-    actuators.z = output.delta_r;//(isfinite(output.delta_r)) ? output.delta_r : 0.0f;
-    actuators.F = output.delta_t;//(isfinite(output.delta_t)) ? output.delta_t : 0.0f;
+  virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
-    actuators_pub_.publish(actuators);
+private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
+  ros::Subscriber vehicle_state_sub_;
+  ros::Subscriber controller_commands_sub_;
+  ros::Publisher actuators_pub_;
+  ros::Publisher internals_pub_;
+  ros::Timer act_pub_timer_;
 
-    if (internals_pub_.getNumSubscribers() > 0)
-    {
-      rosplane_msgs::Controller_Internals inners;
-      inners.phi_c = output.phi_c;
-      inners.theta_c = output.theta_c;
-      switch (output.current_zone)
-      {
-      case alt_zones::TAKE_OFF:
-        inners.alt_zone = inners.ZONE_TAKE_OFF;
-        break;
-      case alt_zones::CLIMB:
-        inners.alt_zone = inners.ZONE_CLIMB;
-        break;
-      case alt_zones::DESCEND:
-        inners.alt_zone = inners.ZONE_DESEND;
-        break;
-      case alt_zones::ALTITUDE_HOLD:
-        inners.alt_zone = inners.ZONE_ALTITUDE_HOLD;
-        break;
-      default:
-        break;
-      }
-      inners.aux_valid = false;
-      internals_pub_.publish(inners);
-    }
-  }
-}
+  struct params_s params_;            /**< params */
+  rosplane_msgs::Controller_Commands controller_commands_;
+  rosplane_msgs::State vehicle_state_;
 
+  void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
+  void controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg);
+  bool command_recieved_;
+
+  dynamic_reconfigure::Server<rosplane::ControllerConfig> server_;
+  dynamic_reconfigure::Server<rosplane::ControllerConfig>::CallbackType func_;
+
+  void reconfigure_callback(rosplane::ControllerConfig &config, uint32_t level);
+
+  /**
+    * Convert from deflection angle to pwm
+    */
+  void convert_to_pwm(struct output_s &output);
+
+  /**
+    * Publish the outputs
+    */
+  void actuator_controls_publish(const ros::TimerEvent &);
+};
 } //end namespace
 
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, "rosplane_controller");
-  rosplane::controller_base *cont = new rosplane::controller_example();
-
-  ros::spin();
-
-  return 0;
-}
+#endif // CONTROLLER_BASE_H
