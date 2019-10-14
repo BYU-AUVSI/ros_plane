@@ -11,12 +11,14 @@
 
 #include <ros/ros.h>
 #include <rosflight_msgs/Command.h>
+#include <rosflight_msgs/Status.h>
 #include <rosplane_msgs/State.h>
 #include <rosplane_msgs/Controller_Commands.h>
 #include <rosplane_msgs/Controller_Internals.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <rosplane/ControllerConfig.h>
+#include <std_srvs/Trigger.h>
 
 namespace rosplane
 {
@@ -52,6 +54,9 @@ protected:
     float h_c;              /** commanded altitude (m) */
     float chi_c;            /** commanded course (rad) */
     float phi_ff;           /** feed forward term for orbits (rad) */
+		float delta_t; 					/** keep track of the previous delta_t to enable throttle ramp up on takeoff */
+		bool rc_override;				/** Autopilot armed */
+		bool landing;						/** True if we want to land */
   };
 
   struct output_s
@@ -69,6 +74,7 @@ protected:
   {
     double alt_hz;           /**< altitude hold zone */
     double alt_toz;          /**< altitude takeoff zone */
+    double alt_hys;         /**< Altitude hold zone hysteresis */
     double tau;
     double c_kp;
     double c_kd;
@@ -103,6 +109,8 @@ protected:
     double pwm_rad_e;
     double pwm_rad_a;
     double pwm_rad_r;
+    double climb_throttle;
+    double climb_angle_deg;
   };
 
   virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
@@ -112,18 +120,34 @@ private:
   ros::NodeHandle nh_private_;
   ros::Subscriber vehicle_state_sub_;
   ros::Subscriber controller_commands_sub_;
+	ros::Subscriber actuators_sub_;
+	ros::Subscriber status_sub_;
   ros::Publisher actuators_pub_;
   ros::Publisher internals_pub_;
   ros::Timer act_pub_timer_;
+  ros::ServiceServer bomb_drop_srv_;
+  ros::ServiceServer bomb_arm_srv_;
+  ros::ServiceServer terminate_srv_;
+  ros::ServiceServer save_flt_srv_;
 
   struct params_s params_;            /**< params */
   rosplane_msgs::Controller_Commands controller_commands_;
   rosplane_msgs::State vehicle_state_;
-
+	rosflight_msgs::Command prev_actuators_;
+	rosflight_msgs::Status status_;
+  bool dropBomb(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
+  bool armBomb(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
   void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
   void controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg);
+	void actuators_callback(const rosflight_msgs::CommandConstPtr &msg);
+	void status_callback(const rosflight_msgs::StatusConstPtr &msg);
   bool command_recieved_;
-
+  bool saveFlight(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
+  bool terminateFlight(std_srvs::Trigger::Request &req, std_srvs::Trigger:: Response &res);
+protected:
+  bool terminate_flight_;
+private:
+  ros::Time drop_time_ = ros::Time::now();
   dynamic_reconfigure::Server<rosplane::ControllerConfig> server_;
   dynamic_reconfigure::Server<rosplane::ControllerConfig>::CallbackType func_;
 
