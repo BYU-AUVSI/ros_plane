@@ -1,6 +1,5 @@
 #include "estimator_base.h"
 #include "estimator_example.h"
-#include <sensor_msgs/NavSatStatus.h>
 
 namespace rosplane
 {
@@ -9,11 +8,19 @@ estimator_base::estimator_base():
   nh_(ros::NodeHandle()),
   nh_private_(ros::NodeHandle("~"))
 {
-  nh_private_.param<std::string>("gps_topic", gnss_fix_topic_, "navsat_compat/fix");
-  nh_private_.param<std::string>("vel_topic", gnss_vel_topic_, "navsat_compat/vel");
+  height_offset_     = 0.0;
+  calibrate_to_this_ = -6.7056;
+  calibration_sum_   = 0.0;
+  avg_this_many_     = 30;
+  counted_this_many_ = 0;
+  bool use_inertial_sense;
+  std::string inertial_sense_topic;
+  nh_private_.param<std::string>("inertial_sense_topic", inertial_sense_topic, "ins");
+  nh_private_.param<std::string>("gps_topic", gps_topic_, "gps");
   nh_private_.param<std::string>("imu_topic", imu_topic_, "imu/data");
   nh_private_.param<std::string>("baro_topic", baro_topic_, "baro");
   nh_private_.param<std::string>("airspeed_topic", airspeed_topic_, "airspeed");
+  nh_private_.param<std::string>("status_topic", status_topic_, "status");
   nh_private_.param<std::string>("status_topic", status_topic_, "status");
   nh_private_.param<double>("update_rate", update_rate_, 100.0);
   params_.Ts = 1.0f/update_rate_;
@@ -24,18 +31,164 @@ estimator_base::estimator_base():
   nh_private_.param<double>("sigma_e_gps", params_.sigma_e_gps, 0.21);
   nh_private_.param<double>("sigma_Vg_gps", params_.sigma_Vg_gps, 0.0500);
   nh_private_.param<double>("sigma_couse_gps", params_.sigma_course_gps, 0.0045);
+  nh_private_.param<bool>("use_inertial_sense", use_inertial_sense, false);
 
-  gnss_fix_sub_ = nh_.subscribe(gnss_fix_topic_, 10, &estimator_base::gnssFixCallback, this);
-  gnss_vel_sub_ = nh_.subscribe(gnss_vel_topic_, 10, &estimator_base::gnssVelCallback, this);
-  imu_sub_ = nh_.subscribe(imu_topic_, 10, &estimator_base::imuCallback, this);
+  if (use_inertial_sense)
+  {
+    inertial_sense_sub_ = nh_.subscribe(inertial_sense_topic, 1, &estimator_base::inertialSenseCallback, this);
+    update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &estimator_base::updateAltitudeAndAirspeed, this);
+    ROS_INFO("[Estimator Node] Using InertialSense.");
+  }
+  else
+  {
+    gps_sub_ = nh_.subscribe(gps_topic_, 10, &estimator_base::gpsCallback, this);
+    imu_sub_ = nh_.subscribe(imu_topic_, 10, &estimator_base::imuCallback, this);
+    update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &estimator_base::update, this);
+  }
+
   baro_sub_ = nh_.subscribe(baro_topic_, 10, &estimator_base::baroAltCallback, this);
-  airspeed_sub_ = nh_.subscribe(airspeed_topic_, 10, &estimator_base::airspeedCallback, this);
   status_sub_ = nh_.subscribe(status_topic_, 1, &estimator_base::statusCallback, this);
-  update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &estimator_base::update, this);
+  airspeed_sub_ = nh_.subscribe(airspeed_topic_, 10, &estimator_base::airspeedCallback, this);
   vehicle_state_pub_ = nh_.advertise<rosplane_msgs::State>("state", 10);
   init_static_ = 0;
   baro_count_ = 0;
+  hhat_ = 0;
   armed_first_time_ = false;
+
+  float lpf_a1   = 8.0;
+  lpf_diff_base_ = 0.0f;
+  lpf_static_base_ = 0.0f;
+  Ve_base_ = 0.0f;
+  Vn_base_ = 0.0f;
+  alpha1_base_   = exp(-lpf_a1*params_.Ts);
+}
+void estimator_base::inertialSenseCallback(const nav_msgs::Odometry &msg_in)
+{
+  // CHANGE ALTITUDE STUFF TO TAKE hhat_
+  // if (counted_this_many_ <= avg_this_many_)
+  // {
+  //   calibration_sum_ += msg_in.pose.pose.position.z;
+  //   counted_this_many_++;
+  //   if (counted_this_many_ == avg_this_many_)
+  //   {
+  //     height_offset_ = calibrate_to_this_ - calibration_sum_/counted_this_many_; // avg + height_offset_ = calibrate_to_this_;
+  //   }
+  // }
+  rosplane_msgs::State msg;
+  msg.header.stamp    = ros::Time::now();
+  msg.header.frame_id = 1; // Denotes global frame
+
+  msg.position[0]     = msg_in.pose.pose.position.x;
+  msg.position[1]     = msg_in.pose.pose.position.y;
+  msg.position[2]     = -hhat_;
+  // msg.position[2]     = msg_in.pose.pose.position.z + height_offset_;
+
+  if (gps_init_)
+  {
+    msg.initial_lat   = init_lat_;
+    msg.initial_lon   = init_lon_;
+    msg.initial_alt   = init_alt_;
+  }
+
+  // Convert quaterion to roll pitch and yaw
+  float e0       = msg_in.pose.pose.orientation.w;
+  float e1       = msg_in.pose.pose.orientation.x;
+  float e2       = msg_in.pose.pose.orientation.y;
+  float e3       = msg_in.pose.pose.orientation.z;
+  float phi      = atan2(2.0f*(e0*e1 + e2*e3),(e0*e0 + e3*e3 - e1*e1 - e2*e2));
+  float theta    = asin(2.0f*(e0*e2 - e1*e3));
+  float psi      = atan2(2.0f*(e0*e3 + e1*e2),(e0*e0 + e1*e1 - e2*e2 - e3*e3));
+  float c_theta  = cosf(theta);
+  float s_theta  = sinf(theta);
+  float c_psi    = cosf(psi);
+  float s_psi    = sinf(psi);
+  float c_phi    = cosf(phi);
+  float s_phi    = sinf(phi);
+
+  float R[2][3];
+  R[0][0]        = c_theta*c_psi;
+  R[0][1]        = s_phi*s_theta*c_psi - c_phi*s_psi;
+  R[0][2]        = c_phi*s_theta*c_psi + s_phi*s_psi;
+  R[1][0]        = c_theta*s_psi;
+  R[1][1]        = s_phi*s_theta*s_psi;
+  R[1][2]        = c_phi*s_theta*s_psi - s_phi*c_psi;
+  float u        = msg_in.twist.twist.linear.x;
+  float v        = msg_in.twist.twist.linear.y;
+  float w        = msg_in.twist.twist.linear.z;
+  float Vn       = R[0][0]*u + R[0][1]*v + R[0][2]*w;
+  float Ve       = R[1][0]*u + R[1][1]*v + R[1][2]*w;
+
+  msg.Va         = Vahat_;
+  msg.alpha      = 0.0;
+  msg.beta       = 0.0;
+  msg.phi        = phi;
+  msg.theta      = theta;
+  msg.psi        = psi;
+  // low pass filter Ve and Vn for course angle
+  Ve_base_ = alpha1_base_ * Ve_base_ + (1.0f - alpha1_base_) * Ve;
+  Vn_base_ = alpha1_base_ * Vn_base_ + (1.0f - alpha1_base_) * Vn;
+  msg.chi        = atan2f(Ve_base_, Vn_base_);
+  msg.p          = msg_in.twist.twist.angular.x;
+  msg.q          = msg_in.twist.twist.angular.y;
+  msg.r          = msg_in.twist.twist.angular.z;
+  msg.Vg         = sqrtf(Vn_base_*Vn_base_ + Ve_base_*Ve_base_);
+  msg.wn         = 0.0;
+  msg.we         = 0.0;
+  msg.quat_valid = false;
+
+  msg.psi_deg    = fmod(msg.psi, 2.0*M_PI)*180/M_PI; //-360 to 360
+  msg.psi_deg   += (msg.psi_deg < -180 ? 360 : 0);
+  msg.psi_deg   -= (msg.psi_deg > 180 ? 360 : 0);
+  msg.chi_deg    = fmod(msg.chi, 2.0*M_PI)*180/M_PI; //-360 to 360
+  msg.chi_deg   += (msg.chi_deg < -180 ? 360 : 0);
+  msg.chi_deg   -= (msg.chi_deg > 180 ? 360 : 0);
+
+  vehicle_state_pub_.publish(msg);
+}
+void estimator_base::updateAirspeed(const ros::TimerEvent &)
+{
+  // Low Pass filter airspeed
+  lpf_diff_base_ = alpha1_base_*lpf_diff_base_ + (1.0f - alpha1_base_)*input_.diff_pres;
+  if (lpf_diff_base_ <= 0.00001)
+    lpf_diff_base_ = 0.000001;
+  //Vahat_ = sqrtf(2.0f/params_.rho*lpf_diff_base_);
+  if (input_.diff_pres < 0.0f)
+    input_.diff_pres = 0.0f;
+  Vahat_ = sqrtf(2.0f/params_.rho*input_.diff_pres);
+  estimator_base::filterAirspeed(Vahat_);
+}
+void estimator_base::filterAirspeed(float &Va){
+	for(int NN = FILTER_LENGTH-1; NN > 0; NN--){
+		Va_history_[NN] = Va_history_[NN-1];
+	}
+	Va_history_[0] = Va;
+	Va = 0;
+	for(int NN = 0; NN < FILTER_LENGTH; NN++){
+		Va += Va_history_[NN]*filter_taps_[NN];
+	}
+}
+
+// Just estimate altitude and airspeed since ROSPlane does that better
+// than the Inertial Sense
+void estimator_base::updateAltitudeAndAirspeed(const ros::TimerEvent &)
+{
+  // UPDATE ALTITUDE
+  // Low pass filter static pressure sensor and invert to estimate altitude
+  lpf_static_base_ = alpha1_base_ * lpf_static_base_ + (1.0f - alpha1_base_)*input_.static_pres;
+  hhat_ = lpf_static_base_ / params_.rho / params_.gravity;
+  if (hhat_ < 0.0f)
+    hhat_ = 0.0f;
+
+  // UPDATE AIRSPEED
+  // Low Pass filter airspeed
+  // lpf_diff_base_ = alpha1_base_*lpf_diff_base_ + (1.0f - alpha1_base_)*input_.diff_pres;
+  // if (lpf_diff_base_ <= 0.00001)
+  //   lpf_diff_base_ = 0.000001;
+  //Vahat_ = sqrtf(2.0f/params_.rho*lpf_diff_base_);
+  if (input_.diff_pres < 0.0f)
+    input_.diff_pres = 0.0f;
+  Vahat_ = sqrtf(2.0f/params_.rho*input_.diff_pres);
+  estimator_base::filterAirspeed(Vahat_); // they're doing this instead of using lpf_diff_base_
 }
 
 void estimator_base::update(const ros::TimerEvent &)
@@ -95,10 +248,9 @@ void estimator_base::update(const ros::TimerEvent &)
   vehicle_state_pub_.publish(msg);
 }
 
-void estimator_base::gnssFixCallback(const sensor_msgs::NavSatFix &msg)
+void estimator_base::gpsCallback(const inertial_sense::GPS &msg)
 {
-  bool has_fix = msg.status.status >= sensor_msgs::NavSatStatus::STATUS_FIX; // Higher values refer to augmented fixes
-  if (!has_fix || !std::isfinite(msg.latitude))
+  if (msg.fix_type == 0 || msg.num_sat < 4 || !std::isfinite(msg.latitude))
   {
     input_.gps_new = false;
     return;
@@ -115,20 +267,38 @@ void estimator_base::gnssFixCallback(const sensor_msgs::NavSatFix &msg)
     input_.gps_n = EARTH_RADIUS*(msg.latitude - init_lat_)*M_PI/180.0;
     input_.gps_e = EARTH_RADIUS*cos(init_lat_*M_PI/180.0)*(msg.longitude - init_lon_)*M_PI/180.0;
     input_.gps_h = msg.altitude - init_alt_;
+    input_.gps_Vg = msg.ground_speed_3d;
+    if (msg.ground_speed_3d > 0.3)
+      input_.gps_course = msg.course;
     input_.gps_new = true;
   }
 }
-void estimator_base::gnssVelCallback(const geometry_msgs::TwistStamped &msg)
-{
-  double v_n = msg.twist.linear.x;
-  double v_e = msg.twist.linear.y;
-  double v_d = msg.twist.linear.z;
-  double ground_speed = sqrt(v_n * v_n + v_e * v_e);
-  double course = atan2(v_e, v_n); //Does this need to be in a specific range? All uses seem to accept anything.
-  input_.gps_Vg = ground_speed;
-  if(ground_speed > 0.3) //this is a magic number. What is it determined from?
-    input_.gps_course = course;
-}
+
+// void estimator_base::gpsCallback(const rosflight_msgs::GPS &msg)
+// {
+//   if (msg.fix != true || msg.NumSat < 4 || !std::isfinite(msg.latitude))
+//   {
+//     input_.gps_new = false;
+//     return;
+//   }
+//   if (!gps_init_)
+//   {
+//     gps_init_ = true;
+//     init_alt_ = msg.altitude;
+//     init_lat_ = msg.latitude;
+//     init_lon_ = msg.longitude;
+//   }
+//   else
+//   {
+//     input_.gps_n = EARTH_RADIUS*(msg.latitude - init_lat_)*M_PI/180.0;
+//     input_.gps_e = EARTH_RADIUS*cos(init_lat_*M_PI/180.0)*(msg.longitude - init_lon_)*M_PI/180.0;
+//     input_.gps_h = msg.altitude - init_alt_;
+//     input_.gps_Vg = msg.speed;
+//     if (msg.speed > 0.3)
+//       input_.gps_course = msg.ground_course;
+//     input_.gps_new = true;
+//   }
+// }
 
 void estimator_base::imuCallback(const sensor_msgs::Imu &msg)
 {
