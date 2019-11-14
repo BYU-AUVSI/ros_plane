@@ -1,14 +1,14 @@
 # Based on the My Twin Dream airframe (1.8m wingspan)
-mass: 3.92
+mass: 5.7
 
-Jx: 0.213
-Jy: 0.171
-Jz: 0.350
+Jx: 0.386
+Jy: 0.1827
+Jz: 0.56628
 Jxz: 0.04
 
 rho: 1.2682
-wing_s: 0.468
-wing_b: 1.8
+wing_s: 0.4874
+wing_b: 1.9
 wing_c: 0.26
 wing_M: 50
 wing_epsilon: 0.1592
@@ -98,7 +98,7 @@ delta_t0: 0.4
 wind_speed_topic: "gazebo/wind_speed"
 truthTopic: "truth"
 
-# Forces and Moments
+# Forces anI don't think that I understand the limitations of this XFLR model well enough.d Moments
 windSpeedTopic: "wind"
 commandTopic: "command"
 
