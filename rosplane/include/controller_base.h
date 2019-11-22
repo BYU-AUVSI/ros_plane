@@ -14,6 +14,7 @@
 #include <rosplane_msgs/State.h>
 #include <rosplane_msgs/Controller_Commands.h>
 #include <rosplane_msgs/Controller_Internals.h>
+#include <rosplane_msgs/Internal_Commands.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <rosplane/ControllerConfig.h>
@@ -58,6 +59,7 @@ protected:
     float h_c;              /** commanded altitude (m) */
     float chi_c;            /** commanded course (rad) */
     float phi_ff;           /** feed forward term for orbits (rad) */
+    float command           // ADDED ON NOV 22 2019 (commanded value for inner loop tuning [can be phi, theta, chi, etc.])
   };
 
   struct output_s
@@ -68,6 +70,7 @@ protected:
     float delta_a;
     float delta_r;
     float delta_t;
+    uint8 ignore; // ADDED ON NOV 22 2019
     alt_zones current_zone;
   };
 
@@ -124,11 +127,12 @@ private:
 
   struct params_s params_;            /**< params */
   rosplane_msgs::Controller_Commands controller_commands_;
+  rosplane_msgs::Internal_Commands internal_commands_; // ADDED ON NOV 22 2019
   rosplane_msgs::State vehicle_state_;
 
   void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
   void controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg);
-  bool command_recieved_;
+  bool command_received_;
 
   dynamic_reconfigure::Server<rosplane::ControllerConfig> server_;
   dynamic_reconfigure::Server<rosplane::ControllerConfig>::CallbackType func_;

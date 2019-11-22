@@ -11,9 +11,11 @@ controller_base::controller_base():
   vehicle_state_sub_ = nh_.subscribe("state", 10, &controller_base::vehicle_state_callback, this);
   controller_commands_sub_ = nh_.subscribe("controller_commands", 10, &controller_base::controller_commands_callback,
                              this);
+  internal_command_sub_ = nh_.subscribe("internal_commands", 10, &controller_base::internal_commands_callback, this); // ADDED ON NOV 22 2019
 
   memset(&vehicle_state_, 0, sizeof(vehicle_state_));
   memset(&controller_commands_, 0, sizeof(controller_commands_));
+  memset(&internal_commands_, 0, sizeof(internal_commands_)); // ADDED ON NOV 22 2019
 
   nh_private_.param<double>("TRIM_E", params_.trim_e, 0.0);
   nh_private_.param<double>("TRIM_A", params_.trim_a, 0.0);
@@ -59,7 +61,7 @@ controller_base::controller_base():
   internals_pub_ = nh_.advertise<rosplane_msgs::Controller_Internals>("controller_inners", 10);
   act_pub_timer_ = nh_.createTimer(ros::Duration(1.0/100.0), &controller_base::actuator_controls_publish, this);
 
-  command_recieved_ = false;
+  command_received_ = false;
 }
 
 void controller_base::vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg)
@@ -69,8 +71,14 @@ void controller_base::vehicle_state_callback(const rosplane_msgs::StateConstPtr 
 
 void controller_base::controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg)
 {
-  command_recieved_ = true;
+  command_received_ = true;
   controller_commands_ = *msg;
+}
+
+void controller_base::internal_commands_callback(const rosplane_msgs::Internal_CommandsConstPtr &msg)
+{ // ADDED ON NOV 22 2019
+  command_received_ = true;
+  internal_commands_ = *msg;
 }
 
 void controller_base::reconfigure_callback(rosplane::ControllerConfig &config, uint32_t level)
@@ -132,10 +140,11 @@ void controller_base::actuator_controls_publish(const ros::TimerEvent &)
   input.h_c = controller_commands_.h_c;
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
+  input.command = internal_commands_.command; // ADDED ON NOV 22 2019
   input.Ts = 0.01f;
 
   struct output_s output;
-  if (command_recieved_ == true)
+  if (command_received_ == true)
   {
     control(params_, input, output);
 
@@ -144,7 +153,7 @@ void controller_base::actuator_controls_publish(const ros::TimerEvent &)
     rosflight_msgs::Command actuators;
     /* publish actuator controls */
 
-    actuators.ignore = 0;
+    actuators.ignore = output.ignore; // ADDED ON NOV 22 2019  (old line -> // actuators.ignore = 0; )
     actuators.mode = rosflight_msgs::Command::MODE_PASS_THROUGH;
     actuators.x = output.delta_a;//(isfinite(output.delta_a)) ? output.delta_a : 0.0f;
     actuators.y = output.delta_e;//(isfinite(output.delta_e)) ? output.delta_e : 0.0f;

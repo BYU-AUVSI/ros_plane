@@ -21,6 +21,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params, input.Ts)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+  output.ignore = 0; // ADDED ON NOV 22 2019
 
   switch (current_zone)
   {
@@ -93,23 +94,30 @@ void controller_example::control(const params_s &params, const input_s &input, o
       ap_differentiator_ = 0;
     }
     break;
-  case alt_zones::TUNE_AIRSPEED_THR:
+  case alt_zones::TUNE_AIRSPEED_THR: // ADDED ON NOV 22 2019
     //FIXME Fill with appropriate behavior
+    output.ignore = 7; // Ignores aileron, elevator, and rudder (does not ignore throttle)
+    output.delta_t = airspeed_with_throttle_hold(input.command, input.va, params, input.Ts);
     break;
   case alt_zones::TUNE_PITCH:
     //FIXME fill with appropriate behavior
+    output.ignore = 13; // Ignores aileron, rudder, and throttle (does not ignore elevator)
     break;
   case alt_zones::TUNE_AIRSPEED_PITCH:
     //FIXME fill with appropriate behavior
+    output.ignore = 5; // Ignores aileron and rudder (does not ignore elevator and throttle)
     break;
   case alt_zones::TUNE_ALTITUDE:
     //FIXME fill with appropriate behavior
+    output.ignore = 5; // Ignores aileron and rudder (does not ignore elevator and throttle)
     break;
   case alt_zones::TUNE_ROLL:
     //FIXME fill with appropriate behavior
+    output.ignore = 14; // Ignores elevator, rudder, and throttle (does not ignore aileron)
     break;
   case alt_zones::TUNE_COURSE:
     //FIXME fill with appropriate behavior
+    output.ignore = 0; // This is done last, so it shouldn't need to ignore anything, it should have full control of the plane (we think)
     break;
   default:
     break;
