@@ -78,7 +78,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
     if (input.h >= input.h_c + params.alt_hz)
     {
-      ROS_DEBUG("desend");
+      ROS_DEBUG("descend");
       current_zone = alt_zones::DESCEND;
       ap_error_ = 0;
       ap_integrator_ = 0;
@@ -107,6 +107,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     break;
   case alt_zones::TUNE_ROLL:
     //FIXME fill with appropriate behavior
+    break;
   case alt_zones::TUNE_COURSE:
     //FIXME fill with appropriate behavior
     break;
