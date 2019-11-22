@@ -26,7 +26,13 @@ enum class alt_zones
   TAKE_OFF,
   CLIMB,
   DESCEND,
-  ALTITUDE_HOLD
+  ALTITUDE_HOLD,
+  TUNE_AIRSPEED_THR,
+  TUNE_PITCH,
+  TUNE_AIRSPEED_PITCH,
+  TUNE_ALTITUDE,
+  TUNE_ROLL,
+  TUNE_COURSE
 };
 
 class controller_base

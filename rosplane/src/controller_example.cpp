@@ -93,6 +93,23 @@ void controller_example::control(const params_s &params, const input_s &input, o
       ap_differentiator_ = 0;
     }
     break;
+  case alt_zones::TUNE_AIRSPEED_THR:
+    //FIXME Fill with appropriate behavior
+    break;
+  case alt_zones::TUNE_PITCH:
+    //FIXME fill with appropriate behavior
+    break;
+  case alt_zones::TUNE_AIRSPEED_PITCH:
+    //FIXME fill with appropriate behavior
+    break;
+  case alt_zones::TUNE_ALTITUDE:
+    //FIXME fill with appropriate behavior
+    break;
+  case alt_zones::TUNE_ROLL:
+    //FIXME fill with appropriate behavior
+  case alt_zones::TUNE_COURSE:
+    //FIXME fill with appropriate behavior
+    break;
   default:
     break;
   }
