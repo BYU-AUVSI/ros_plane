@@ -11,7 +11,7 @@ controller_base::controller_base():
   vehicle_state_sub_ = nh_.subscribe("state", 10, &controller_base::vehicle_state_callback, this);
   controller_commands_sub_ = nh_.subscribe("controller_commands", 10, &controller_base::controller_commands_callback,
                              this);
-  internal_command_sub_ = nh_.subscribe("internal_commands", 10, &controller_base::internal_commands_callback, this); // ADDED ON NOV 22 2019
+  internal_commands_sub_ = nh_.subscribe("internal_commands", 10, &controller_base::internal_commands_callback, this); // ADDED ON NOV 22 2019
 
   memset(&vehicle_state_, 0, sizeof(vehicle_state_));
   memset(&controller_commands_, 0, sizeof(controller_commands_));
@@ -62,6 +62,8 @@ controller_base::controller_base():
   act_pub_timer_ = nh_.createTimer(ros::Duration(1.0/100.0), &controller_base::actuator_controls_publish, this);
 
   command_received_ = false;
+
+  tuning_ = false; // ADDED 26 NOV 2019
 }
 
 void controller_base::vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg)
@@ -73,12 +75,16 @@ void controller_base::controller_commands_callback(const rosplane_msgs::Controll
 {
   command_received_ = true;
   controller_commands_ = *msg;
+
+  tuning_ = false; // ADDED 26 NOV 2019
 }
 
 void controller_base::internal_commands_callback(const rosplane_msgs::Internal_CommandsConstPtr &msg)
 { // ADDED ON NOV 22 2019
   command_received_ = true;
   internal_commands_ = *msg;
+
+  tuning_ = true; // ADDED 26 NOV 2019
 }
 
 void controller_base::reconfigure_callback(rosplane::ControllerConfig &config, uint32_t level)
@@ -129,7 +135,7 @@ void controller_base::actuator_controls_publish(const ros::TimerEvent &)
 {
   struct input_s input;
   input.h = -vehicle_state_.position[2];
-  input.va = vehicle_state_.Va;
+  input.Va = vehicle_state_.Va;
   input.phi = vehicle_state_.phi;
   input.theta = vehicle_state_.theta;
   input.chi = vehicle_state_.chi;
@@ -140,7 +146,23 @@ void controller_base::actuator_controls_publish(const ros::TimerEvent &)
   input.h_c = controller_commands_.h_c;
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
-  input.command = internal_commands_.command; // ADDED ON NOV 22 2019
+
+  if (tuning_ == true) // ADDED ON NOV 22 2019
+  {
+    input.alt_zone = internal_commands_.tuning_zone;
+    input.Va_c = internal_commands_.Va_c;
+    input.h_c = internal_commands_.h_c;
+    input.chi_c = internal_commands_.chi_c;
+    input.theta_c = internal_commands_.theta_c;
+    input.phi_c = internal_commands_.phi_c;
+    input.tuning = true;
+  }
+  else
+  {
+    input.tuning = false;
+  }
+  //input.command = internal_commands_.command; // ADDED ON NOV 22 2019
+
   input.Ts = 0.01f;
 
   struct output_s output;
@@ -162,7 +184,7 @@ void controller_base::actuator_controls_publish(const ros::TimerEvent &)
 
     actuators_pub_.publish(actuators);
 
-    if (internals_pub_.getNumSubscribers() > 0) // For debugging and plotting?
+    if (internals_pub_.getNumSubscribers() > 0) // For debugging and plotting???
     {
       rosplane_msgs::Controller_Internals inners;
       inners.phi_c = output.phi_c;

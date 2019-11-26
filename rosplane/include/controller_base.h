@@ -48,7 +48,7 @@ protected:
   {
     float Ts;               /** time step */
     float h;                /** altitude */
-    float va;               /** airspeed */
+    float Va;               /** airspeed */
     float phi;              /** roll angle */
     float theta;            /** pitch angle */
     float chi;              /** course angle */
@@ -59,7 +59,11 @@ protected:
     float h_c;              /** commanded altitude (m) */
     float chi_c;            /** commanded course (rad) */
     float phi_ff;           /** feed forward term for orbits (rad) */
-    float command           // ADDED ON NOV 22 2019 (commanded value for loop tuning [can be phi, theta, chi, etc.])
+    // float command           // ADDED ON NOV 22 2019 (commanded value for loop tuning [can be phi, theta, chi, etc.])
+    uint alt_zone;
+    float phi_c;
+    float theta_c;
+    float tuning;
   };
 
   struct output_s
@@ -70,7 +74,7 @@ protected:
     float delta_a;
     float delta_r;
     float delta_t;
-    uint8 ignore; // ADDED ON NOV 22 2019
+    uint ignore; // ADDED ON NOV 22 2019
     alt_zones current_zone;
   };
 
@@ -121,6 +125,7 @@ private:
   ros::NodeHandle nh_private_;
   ros::Subscriber vehicle_state_sub_;
   ros::Subscriber controller_commands_sub_;
+  ros::Subscriber internal_commands_sub_;
   ros::Publisher actuators_pub_;
   ros::Publisher internals_pub_;
   ros::Timer act_pub_timer_;
@@ -134,6 +139,7 @@ private:
   void controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg);
   void internal_commands_callback(const rosplane_msgs::Internal_CommandsConstPtr &msg); // ADDED ON NOV 22 2019
   bool command_received_;
+  bool tuning_;
 
   dynamic_reconfigure::Server<rosplane::ControllerConfig> server_;
   dynamic_reconfigure::Server<rosplane::ControllerConfig>::CallbackType func_;

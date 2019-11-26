@@ -36,7 +36,7 @@ private:
   float at_integrator_;
   float at_differentiator_;
 
-  float altitiude_hold(float h_c, float h, const struct params_s &params, float Ts);
+  float altitude_hold(float h_c, float h, const struct params_s &params, float Ts);
   float a_error_;
   float a_integrator_;
   float a_differentiator_;
