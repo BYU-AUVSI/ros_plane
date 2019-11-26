@@ -21,7 +21,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params, input.Ts)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
-  output.ignore = 0; // ADDED ON NOV 22 2019
+  output.ignore = 0; // ADDED ON NOV 22 2019 //Is changed in appropriate tuning zones
 
   switch (current_zone)
   {
@@ -76,7 +76,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     break;
   case alt_zones::ALTITUDE_HOLD:
     output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-    output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
+    output.theta_c = altitude_hold(input.h_c, input.h, params, input.Ts);
     if (input.h >= input.h_c + params.alt_hz)
     {
       ROS_DEBUG("descend");
@@ -94,30 +94,31 @@ void controller_example::control(const params_s &params, const input_s &input, o
       ap_differentiator_ = 0;
     }
     break;
-  case alt_zones::TUNE_AIRSPEED_THR: // ADDED ON NOV 22 2019
-    //FIXME Fill with appropriate behavior
+  case alt_zones::TUNE_AIRSPEED_THR: //command = va_c // ADDED ON NOV 22 2019
     output.ignore = 7; // Ignores aileron, elevator, and rudder (does not ignore throttle)
     output.delta_t = airspeed_with_throttle_hold(input.command, input.va, params, input.Ts);
     break;
-  case alt_zones::TUNE_PITCH:
-    //FIXME fill with appropriate behavior
+  case alt_zones::TUNE_PITCH: //command = theta_c
     output.ignore = 13; // Ignores aileron, rudder, and throttle (does not ignore elevator)
+    output.theta_c = input.command;
     break;
-  case alt_zones::TUNE_AIRSPEED_PITCH:
-    //FIXME fill with appropriate behavior
-    output.ignore = 5; // Ignores aileron and rudder (does not ignore elevator and throttle)
+  case alt_zones::TUNE_AIRSPEED_PITCH: //command = va_c //Safety pilot will maintain constant throttle
+    output.ignore = 13; // Ignores aileron, rudder, and throttle (does not ignore elevator)
+    output.theta_c = airspeed_with_pitch_hold(input.command, input.va, params, input.Ts);
     break;
-  case alt_zones::TUNE_ALTITUDE:
-    //FIXME fill with appropriate behavior
-    output.ignore = 5; // Ignores aileron and rudder (does not ignore elevator and throttle)
+  case alt_zones::TUNE_ALTITUDE: //command = h_c
+    output.ignore = 13; // Ignores aileron, rudder, and throttle (does not ignore elevator)
+    output.theta_c = altitude_hold(input.command, input.h, params, input.Ts);
     break;
-  case alt_zones::TUNE_ROLL:
+  case alt_zones::TUNE_ROLL: //command = phi_c
     //FIXME fill with appropriate behavior
     output.ignore = 14; // Ignores elevator, rudder, and throttle (does not ignore aileron)
+    output.delta_a = roll_hold(output.command, input.phi, input.p, params, input.Ts);
     break;
-  case alt_zones::TUNE_COURSE:
-    //FIXME fill with appropriate behavior
-    output.ignore = 0; // This is done last, so it shouldn't need to ignore anything, it should have full control of the plane (we think)
+  case alt_zones::TUNE_COURSE: //command = chi_c
+    output.ignore = 0;
+    output.phi_c = course_hold(input.command, input.chi, input.phi_ff, input.r, params, input.Ts);
+    output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
     break;
   default:
     break;
@@ -236,7 +237,7 @@ float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, cons
   return delta_t;
 }
 
-float controller_example::altitiude_hold(float h_c, float h, const params_s &params, float Ts)
+float controller_example::altitude_hold(float h_c, float h, const params_s &params, float Ts)
 {
   float error = h_c - h;
 

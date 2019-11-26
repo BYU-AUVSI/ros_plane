@@ -1,4 +1,4 @@
-# Controller internals (inner loops, states) output from the autopilot controller, for now just for debuging and ploting
+# Controller internals (inner loops, states) output from the autopilot controller, for now just for debugging and plotting
 
 # @warning theta_c, phi_c and alt_zone have always to be valid, the aux array is optional
 float32 theta_c		# Commanded pitch (rad)
@@ -9,5 +9,5 @@ bool aux_valid		# Auxiliary commands valid
 
 uint8 ZONE_TAKE_OFF = 0
 uint8 ZONE_CLIMB = 1
-uint8 ZONE_DESEND = 2
+uint8 ZONE_DESCEND = 2
 uint8 ZONE_ALTITUDE_HOLD = 3

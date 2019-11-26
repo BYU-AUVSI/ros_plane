@@ -14,7 +14,7 @@
 #include <rosplane_msgs/State.h>
 #include <rosplane_msgs/Controller_Commands.h>
 #include <rosplane_msgs/Controller_Internals.h>
-#include <rosplane_msgs/Internal_Commands.h>
+#include <rosplane_msgs/Internal_Commands.h> // ADDED ON NOV 22 2019
 
 #include <dynamic_reconfigure/server.h>
 #include <rosplane/ControllerConfig.h>
@@ -28,12 +28,12 @@ enum class alt_zones
   CLIMB,
   DESCEND,
   ALTITUDE_HOLD,
-  TUNE_AIRSPEED_THR,
-  TUNE_PITCH,
-  TUNE_AIRSPEED_PITCH,
-  TUNE_ALTITUDE,
-  TUNE_ROLL,
-  TUNE_COURSE
+  TUNE_AIRSPEED_THR, // ADDED ON NOV 22 2019
+  TUNE_PITCH, // ADDED ON NOV 22 2019
+  TUNE_AIRSPEED_PITCH,  // ADDED ON NOV 22 2019
+  TUNE_ALTITUDE,  // ADDED ON NOV 22 2019
+  TUNE_ROLL,  // ADDED ON NOV 22 2019
+  TUNE_COURSE // ADDED ON NOV 22 2019
 };
 
 class controller_base
@@ -59,7 +59,7 @@ protected:
     float h_c;              /** commanded altitude (m) */
     float chi_c;            /** commanded course (rad) */
     float phi_ff;           /** feed forward term for orbits (rad) */
-    float command           // ADDED ON NOV 22 2019 (commanded value for inner loop tuning [can be phi, theta, chi, etc.])
+    float command           // ADDED ON NOV 22 2019 (commanded value for loop tuning [can be phi, theta, chi, etc.])
   };
 
   struct output_s
@@ -132,6 +132,7 @@ private:
 
   void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
   void controller_commands_callback(const rosplane_msgs::Controller_CommandsConstPtr &msg);
+  void internal_commands_callback(const rosplane_msgs::Internal_CommandsConstPtr &msg); // ADDED ON NOV 22 2019
   bool command_received_;
 
   dynamic_reconfigure::Server<rosplane::ControllerConfig> server_;
