@@ -155,6 +155,7 @@ void controller_base::actuator_controls_publish(const ros::TimerEvent &)
     input.chi_c = internal_commands_.chi_c;
     input.theta_c = internal_commands_.theta_c;
     input.phi_c = internal_commands_.phi_c;
+    input.phi_ff = 0;
     input.tuning = true;
   }
   else

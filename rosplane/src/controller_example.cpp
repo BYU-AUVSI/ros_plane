@@ -144,8 +144,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     break;
   case alt_zones::TUNE_COURSE: //command = chi_c
     output.ignore = 0;
-    output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
-    output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+    output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.Va, params, input.Ts);
     output.theta_c = altitude_hold(input.h_c, input.h, params, input.Ts);
     break;
   default:
