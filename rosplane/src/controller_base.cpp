@@ -48,7 +48,7 @@ controller_base::controller_base():
   nh_private_.param<double>("ALT_KI", params_.a_ki, 0.01);
   nh_private_.param<double>("BETA_KP", params_.b_kp, -0.1164);
   nh_private_.param<double>("BETA_KD", params_.b_kd, 0.0);
-  nh_private_.param<double>("_KI", params_.b_ki, -0.0037111);
+  nh_private_.param<double>("BETA_KI", params_.b_ki, -0.0037111);
   nh_private_.param<double>("MAX_E", params_.max_e, 0.610);
   nh_private_.param<double>("MAX_A", params_.max_a, 0.523);
   nh_private_.param<double>("MAX_R", params_.max_r, 0.523);
