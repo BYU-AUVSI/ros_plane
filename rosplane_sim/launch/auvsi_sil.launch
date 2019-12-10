@@ -5,8 +5,8 @@
   <arg name="mav_name"            default="fixedwing"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="paused" value="false"/>
-    <arg name="gui" value="false"/>
+    <arg name="paused" value="true"/>
+    <arg name="gui" value="true"/>
     <arg name="verbose" value="false"/>
     <arg name="debug" value="false"/>
   </include>
@@ -28,17 +28,22 @@
     </node>
 
     <node name="autopilot" pkg="rosplane" type="rosplane_controller" >
-      <remap from="state" to="truth"/>
+      <!--<remap from="state" to="truth"/>-->
     </node>
 
     <node name="estimator" pkg="rosplane" type="rosplane_estimator" output="screen"/>
 
     <node name="pathfollower" pkg="rosplane" type="rosplane_path_follower">
-       <remap from="state" to="truth"/>
+       <!--<remap from="state" to="truth"/>-->
     </node>
 
+    <!--
     <node name="current_path_publisher" pkg="rostopic" type="rostopic"
-      args="pub current_path rosplane_msgs/Current_Path '0' '15.0'  '[0.0, 0.0, -100.0]'  '[1.0, 0.0, 0.0]'  '[0.0, 0.0, -100.0]'  '100.0' '1'"/>
+      args="pub current_path rosplane_msgs/Current_Path '0' '15.0'  '[0.0, 0.0, -100.0]'  '[1.0, 0.0, 0.0]'  '[0.0, 0.0, -100.0]'  '100.0' '1'"/> -->
+    <node name="pathmanager" pkg="rosplane" type="rosplane_path_manager" output="screen">
+      <!--<remap from="state" to="truth"/>-->
+    </node>
+    <node name="pathplanner" pkg="rosplane" type="rosplane_path_planner"/>
     <node name="auto_launch" pkg="auto_launch" type='auto_launch.py'>
       <param name="delay" value="10"/>
     </node>
