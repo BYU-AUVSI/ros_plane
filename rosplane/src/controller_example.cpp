@@ -169,7 +169,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
   case alt_zones::TUNE_ROLL: //command = phi_c
     //FIXME fill with appropriate behavior
     output.ignore = 14; // Ignores elevator, rudder, and throttle (does not ignore aileron)
-    output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+    output.delta_a = roll_hold(input.phi_c, input.phi, input.p, params, input.Ts);
     current_zone = alt_zones::ALTITUDE_HOLD;
     at_error_ = 0;
     at_integrator_ = 0;
