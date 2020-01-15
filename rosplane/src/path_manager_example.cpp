@@ -17,17 +17,17 @@ void path_manager_example::manage(const params_s &params, const input_s &input, 
   if (num_waypoints_ < 2)
   {
     ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
-    output.flag = false;
-    output.Va_d = 12;
-    output.c[0] = 0.0f;
-    output.c[1] = 0.0f;
-    output.c[2] = -50.0f;
-    output.rho = params.R_min;
-    output.lambda = 1;
+    output.is_straight = false;
+    output.airspeed_command = 12;
+    output.center[0] = 0.0f;
+    output.center[1] = 0.0f;
+    output.center[2] = -50.0f;
+    output.orbit_radius = params.R_min;
+    output.orbit_direction = 1;
   }
   else
   {
-    if (waypoints_[idx_a_].chi_valid)
+    if (waypoints_[last_waypoint_index_].course_valid)
     {
       manage_dubins(params, input, output);
     }
@@ -43,49 +43,49 @@ void path_manager_example::manage(const params_s &params, const input_s &input, 
 void path_manager_example::manage_line(const params_s &params, const input_s &input, output_s &output)
 {
 
-  Eigen::Vector3f p;
-  p << input.pn, input.pe, -input.h;
+  Eigen::Vector3f position;
+  position << input.position_north, input.position_east, -input.altitude;
 
-  int idx_b;
+  int next_waypoint_index;
   int idx_c;
-  if (idx_a_ == num_waypoints_ - 1)
+  if (last_waypoint_index_ == num_waypoints_ - 1)
   {
-    idx_b = 0;
+    next_waypoint_index = 0;
     idx_c = 1;
   }
-  else if (idx_a_ == num_waypoints_ - 2)
+  else if (last_waypoint_index_ == num_waypoints_ - 2)
   {
-    idx_b = num_waypoints_ - 1;
+    next_waypoint_index = num_waypoints_ - 1;
     idx_c = 0;
   }
   else
   {
-    idx_b = idx_a_ + 1;
-    idx_c = idx_b + 1;
+    next_waypoint_index = last_waypoint_index_ + 1;
+    idx_c = next_waypoint_index + 1;
   }
 
-  Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
-  Eigen::Vector3f w_i(waypoints_[idx_b].w);
-  Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
+  Eigen::Vector3f last_waypoint(waypoints_[last_waypoint_index_].position);
+  Eigen::Vector3f w_i(waypoints_[next_waypoint_index].position);
+  Eigen::Vector3f next_waypoint(waypoints_[idx_c].position);
 
-  output.flag = true;
-  output.Va_d = waypoints_[idx_a_].Va_d;
-  output.r[0] = w_im1(0);
-  output.r[1] = w_im1(1);
-  output.r[2] = w_im1(2);
-  Eigen::Vector3f q_im1 = (w_i - w_im1).normalized();
-  Eigen::Vector3f q_i = (w_ip1 - w_i).normalized();
-  output.q[0] = q_im1(0);
-  output.q[1] = q_im1(1);
-  output.q[2] = q_im1(2);
+  output.is_straight = true;
+  output.airspeed_command = waypoints_[last_waypoint_index_].airspeed_command;
+  output.line_origin[0] = last_waypoint(0);
+  output.line_origin[1] = last_waypoint(1);
+  output.line_origin[2] = last_waypoint(2);
+  Eigen::Vector3f leg1_unit_direction = (w_i - last_waypoint).normalized();
+  Eigen::Vector3f q_i = (next_waypoint - w_i).normalized();
+  output.line_direction[0] = leg1_unit_direction(0);
+  output.line_direction[1] = leg1_unit_direction(1);
+  output.line_direction[2] = leg1_unit_direction(2);
 
-  Eigen::Vector3f n_i = (q_im1 + q_i).normalized();
-  if ((p - w_i).dot(n_i) > 0.0f)
+  Eigen::Vector3f n_i = (leg1_unit_direction + q_i).normalized();
+  if ((position - w_i).dot(n_i) > 0.0f)
   {
-    if (idx_a_ == num_waypoints_ - 1)
-      idx_a_ = 0;
+    if (last_waypoint_index_ == num_waypoints_ - 1)
+        last_waypoint_index_ = 0;
     else
-      idx_a_++;
+      last_waypoint_index_++;
   }
 
 }
@@ -99,75 +99,78 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
   }
 
   Eigen::Vector3f p;
-  p << input.pn, input.pe, -input.h;
+  p << input.position_north, input.position_east, -input.altitude;
 
-  int idx_b;
-  int idx_c;
-  if (idx_a_ == num_waypoints_ - 1)
+  int current_waypoint_index;
+  int next_waypoint_index;
+  if (last_waypoint_index_ == num_waypoints_ - 1)
   {
-    idx_b = 0;
-    idx_c = 1;
+    current_waypoint_index = 0;
+    next_waypoint_index = 1;
   }
-  else if (idx_a_ == num_waypoints_ - 2)
+  else if (last_waypoint_index_ == num_waypoints_ - 2)
   {
-    idx_b = num_waypoints_ - 1;
-    idx_c = 0;
+    current_waypoint_index = num_waypoints_ - 1;
+    next_waypoint_index = 0;
   }
   else
   {
-    idx_b = idx_a_ + 1;
-    idx_c = idx_b + 1;
+    current_waypoint_index = last_waypoint_index_ + 1;
+    next_waypoint_index = current_waypoint_index + 1;
   }
 
-  Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
-  Eigen::Vector3f w_i(waypoints_[idx_b].w);
-  Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
+  Eigen::Vector3f last_waypoint(waypoints_[last_waypoint_index_].position);
+  Eigen::Vector3f current_waypoint(waypoints_[current_waypoint_index].position);
+  Eigen::Vector3f next_waypoint(waypoints_[next_waypoint_index].position);
 
   float R_min = params.R_min;
 
-  output.Va_d = waypoints_[idx_a_].Va_d;
-  output.r[0] = w_im1(0);
-  output.r[1] = w_im1(1);
-  output.r[2] = w_im1(2);
-  Eigen::Vector3f q_im1 = (w_i - w_im1).normalized();
-  Eigen::Vector3f q_i = (w_ip1 - w_i).normalized();
-  float beta = acosf(-q_im1.dot(q_i));
+  output.airspeed_command = waypoints_[last_waypoint_index_].airspeed_command;
+  output.line_origin[0] = last_waypoint(0);
+  output.line_origin[1] = last_waypoint(1);
+  output.line_origin[2] = last_waypoint(2);
+  Eigen::Vector3f leg1_unit_direction = (current_waypoint - last_waypoint).normalized();
+  Eigen::Vector3f leg2_unit_direction = (next_waypoint - current_waypoint).normalized();
+  float turn_angle_rad = acosf(-leg1_unit_direction.dot(leg2_unit_direction));
 
   Eigen::Vector3f z;
   switch (fil_state_)
   {
   case fillet_state::STRAIGHT:
-    output.flag = true;
-    output.q[0] = q_im1(0);
-    output.q[1] = q_im1(1);
-    output.q[2] = q_im1(2);
-    output.c[0] = 1;
-    output.c[1] = 1;
-    output.c[2] = 1;
-    output.rho = 1;
-    output.lambda = 1;
-    z = w_i - q_im1*(R_min/tanf(beta/2.0));
-    if ((p - z).dot(q_im1) > 0)
+    output.is_straight = true;
+    output.line_direction[0] = leg1_unit_direction(0);
+    output.line_direction[1] = leg1_unit_direction(1);
+    output.line_direction[2] = leg1_unit_direction(2);
+    output.center[0] = 1;
+    output.center[1] = 1;
+    output.center[2] = 1;
+    output.orbit_radius = 1;
+    output.orbit_direction = 1;
+    z = current_waypoint - leg1_unit_direction*(R_min/tanf(turn_angle_rad/2.0));
+    output.line_end[0] = current_waypoint(0);
+    output.line_end[1] = current_waypoint(1);
+    output.line_end[2] = current_waypoint(2);
+    if ((p - z).dot(leg1_unit_direction) > 0)
       fil_state_ = fillet_state::ORBIT;
     break;
   case fillet_state::ORBIT:
-    output.flag = false;
-    output.q[0] = q_i(0);
-    output.q[1] = q_i(1);
-    output.q[2] = q_i(2);
-    Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized()*(R_min/sinf(beta/2.0));
-    output.c[0] = c(0);
-    output.c[1] = c(1);
-    output.c[2] = c(2);
-    output.rho = R_min;
-    output.lambda = ((q_im1(0)*q_i(1) - q_im1(1)*q_i(0)) > 0 ? 1 : -1);
-    z = w_i + q_i*(R_min/tanf(beta/2.0));
-    if ((p - z).dot(q_i) > 0)
+    output.is_straight = false;
+    output.line_direction[0] = leg2_unit_direction(0);
+    output.line_direction[1] = leg2_unit_direction(1);
+    output.line_direction[2] = leg2_unit_direction(2);
+    Eigen::Vector3f c = current_waypoint - (leg1_unit_direction - leg2_unit_direction).normalized()*(R_min/sinf(turn_angle_rad/2.0));
+    output.center[0] = c(0);
+    output.center[1] = c(1);
+    output.center[2] = c(2);
+    output.orbit_radius = R_min;
+    output.orbit_direction = ((leg1_unit_direction(0) * leg2_unit_direction(1) - leg1_unit_direction(1) * leg2_unit_direction(0)) > 0 ? 1 : -1);
+    z = current_waypoint + leg2_unit_direction*(R_min/tanf(turn_angle_rad/2.0));
+    if ((p - z).dot(leg2_unit_direction) > 0)
     {
-      if (idx_a_ == num_waypoints_ - 1)
-        idx_a_ = 0;
+      if (last_waypoint_index_ == num_waypoints_ - 1)
+          last_waypoint_index_ = 0;
       else
-        idx_a_++;
+        last_waypoint_index_++;
       fil_state_ = fillet_state::STRAIGHT;
     }
     break;
@@ -177,29 +180,29 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
 void path_manager_example::manage_dubins(const params_s &params, const input_s &input, output_s &output)
 {
   Eigen::Vector3f p;
-  p << input.pn, input.pe, -input.h;
+  p << input.position_north, input.position_east, -input.altitude;
 
-  output.Va_d = waypoints_[idx_a_].Va_d;
-  output.r[0] = 0;
-  output.r[1] = 0;
-  output.r[2] = 0;
-  output.q[0] = 0;
-  output.q[1] = 0;
-  output.q[2] = 0;
-  output.c[0] = 0;
-  output.c[1] = 0;
-  output.c[2] = 0;
+  output.airspeed_command = waypoints_[last_waypoint_index_].airspeed_command;
+  output.line_origin[0] = 0;
+  output.line_origin[1] = 0;
+  output.line_origin[2] = 0;
+  output.line_direction[0] = 0;
+  output.line_direction[1] = 0;
+  output.line_direction[2] = 0;
+  output.center[0] = 0;
+  output.center[1] = 0;
+  output.center[2] = 0;
 
   switch (dub_state_)
   {
   case dubin_state::FIRST:
     dubinsParameters(waypoints_[0], waypoints_[1], params.R_min);
-    output.flag = false;
-    output.c[0] = dubinspath_.cs(0);
-    output.c[1] = dubinspath_.cs(1);
-    output.c[2] = dubinspath_.cs(2);
-    output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lams;
+    output.is_straight = false;
+    output.center[0] = dubinspath_.cs(0);
+    output.center[1] = dubinspath_.cs(1);
+    output.center[2] = dubinspath_.cs(2);
+    output.orbit_radius = dubinspath_.R;
+    output.orbit_direction = dubinspath_.lams;
     if ((p - dubinspath_.w1).dot(dubinspath_.q1) >= 0) // start in H1
     {
       dub_state_ = dubin_state::BEFORE_H1_WRONG_SIDE;
@@ -210,42 +213,42 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     }
     break;
   case dubin_state::BEFORE_H1:
-    output.flag = false;
-    output.c[0] = dubinspath_.cs(0);
-    output.c[1] = dubinspath_.cs(1);
-    output.c[2] = dubinspath_.cs(2);
-    output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lams;
+    output.is_straight = false;
+    output.center[0] = dubinspath_.cs(0);
+    output.center[1] = dubinspath_.cs(1);
+    output.center[2] = dubinspath_.cs(2);
+    output.orbit_radius = dubinspath_.R;
+    output.orbit_direction = dubinspath_.lams;
     if ((p - dubinspath_.w1).dot(dubinspath_.q1) >= 0) // entering H1
     {
       dub_state_ = dubin_state::STRAIGHT;
     }
     break;
   case dubin_state::BEFORE_H1_WRONG_SIDE:
-    output.flag = false;
-    output.c[0] = dubinspath_.cs(0);
-    output.c[1] = dubinspath_.cs(1);
-    output.c[2] = dubinspath_.cs(2);
-    output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lams;
+    output.is_straight = false;
+    output.center[0] = dubinspath_.cs(0);
+    output.center[1] = dubinspath_.cs(1);
+    output.center[2] = dubinspath_.cs(2);
+    output.orbit_radius = dubinspath_.R;
+    output.orbit_direction = dubinspath_.lams;
     if ((p - dubinspath_.w1).dot(dubinspath_.q1) < 0) // exit H1
     {
       dub_state_ = dubin_state::BEFORE_H1;
     }
     break;
   case dubin_state::STRAIGHT:
-    output.flag = true;
-    output.r[0] = dubinspath_.w1(0);
-    output.r[1] = dubinspath_.w1(1);
-    output.r[2] = dubinspath_.w1(2);
+    output.is_straight = true;
+    output.line_origin[0] = dubinspath_.w1(0);
+    output.line_origin[1] = dubinspath_.w1(1);
+    output.line_origin[2] = dubinspath_.w1(2);
     // output.r[0] = dubinspath_.z1(0);
     // output.r[1] = dubinspath_.z1(1);
     // output.r[2] = dubinspath_.z1(2);
-    output.q[0] = dubinspath_.q1(0);
-    output.q[1] = dubinspath_.q1(1);
-    output.q[2] = dubinspath_.q1(2);
-    output.rho = 1;
-    output.lambda = 1;
+    output.line_direction[0] = dubinspath_.q1(0);
+    output.line_direction[1] = dubinspath_.q1(1);
+    output.line_direction[2] = dubinspath_.q1(2);
+    output.orbit_radius = 1;
+    output.orbit_direction = 1;
     if ((p - dubinspath_.w2).dot(dubinspath_.q1) >= 0) // entering H2
     {
       if ((p - dubinspath_.w3).dot(dubinspath_.q3) >= 0) // start in H3
@@ -259,34 +262,34 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     }
     break;
   case dubin_state::BEFORE_H3:
-    output.flag = false;
-    output.c[0] = dubinspath_.ce(0);
-    output.c[1] = dubinspath_.ce(1);
-    output.c[2] = dubinspath_.ce(2);
-    output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lame;
+    output.is_straight = false;
+    output.center[0] = dubinspath_.ce(0);
+    output.center[1] = dubinspath_.ce(1);
+    output.center[2] = dubinspath_.ce(2);
+    output.orbit_radius = dubinspath_.R;
+    output.orbit_direction = dubinspath_.lame;
     if ((p - dubinspath_.w3).dot(dubinspath_.q3) >= 0) // entering H3
     {
       // increase the waypoint pointer
-      int idx_b;
-      if (idx_a_ == num_waypoints_ - 1)
+      int next_waypoint_index;
+      if (last_waypoint_index_ == num_waypoints_ - 1)
       {
-        idx_a_ = 0;
-        idx_b = 1;
+          last_waypoint_index_ = 0;
+        next_waypoint_index = 1;
       }
-      else if (idx_a_ == num_waypoints_ - 2)
+      else if (last_waypoint_index_ == num_waypoints_ - 2)
       {
-        idx_a_++;
-        idx_b = 0;
+        last_waypoint_index_++;
+        next_waypoint_index = 0;
       }
       else
       {
-        idx_a_++;
-        idx_b = idx_a_ + 1;
+        last_waypoint_index_++;
+        next_waypoint_index = last_waypoint_index_ + 1;
       }
 
       // plan new Dubin's path to next waypoint configuration
-      dubinsParameters(waypoints_[idx_a_], waypoints_[idx_b], params.R_min);
+      dubinsParameters(waypoints_[last_waypoint_index_], waypoints_[next_waypoint_index], params.R_min);
 
       //start new path
       if ((p - dubinspath_.w1).dot(dubinspath_.q1) >= 0) // start in H1
@@ -300,12 +303,12 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     }
     break;
   case dubin_state::BEFORE_H3_WRONG_SIDE:
-    output.flag = false;
-    output.c[0] = dubinspath_.ce(0);
-    output.c[1] = dubinspath_.ce(1);
-    output.c[2] = dubinspath_.ce(2);
-    output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lame;
+    output.is_straight = false;
+    output.center[0] = dubinspath_.ce(0);
+    output.center[1] = dubinspath_.ce(1);
+    output.center[2] = dubinspath_.ce(2);
+    output.orbit_radius = dubinspath_.R;
+    output.orbit_direction = dubinspath_.lame;
     if ((p - dubinspath_.w3).dot(dubinspath_.q3) < 0) // exit H3
     {
       dub_state_ = dubin_state::BEFORE_H1;
@@ -339,22 +342,22 @@ float path_manager_example::mo(float in)
 
 void path_manager_example::dubinsParameters(const waypoint_s start_node, const waypoint_s end_node, float R)
 {
-  float ell = sqrtf((start_node.w[0] - end_node.w[0])*(start_node.w[0] - end_node.w[0]) +
-                    (start_node.w[1] - end_node.w[1])*(start_node.w[1] - end_node.w[1]));
+  float ell = sqrtf((start_node.position[0] - end_node.position[0]) * (start_node.position[0] - end_node.position[0]) +
+                    (start_node.position[1] - end_node.position[1]) * (start_node.position[1] - end_node.position[1]));
   if (ell < 2.0*R)
   {
     ROS_ERROR("The distance between nodes must be larger than 2R.");
   }
   else
   {
-    dubinspath_.ps(0) = start_node.w[0];
-    dubinspath_.ps(1) = start_node.w[1];
-    dubinspath_.ps(2) = start_node.w[2];
-    dubinspath_.chis = start_node.chi_d;
-    dubinspath_.pe(0) = end_node.w[0];
-    dubinspath_.pe(1) = end_node.w[1];
-    dubinspath_.pe(2) = end_node.w[2];
-    dubinspath_.chie = end_node.chi_d;
+    dubinspath_.ps(0) = start_node.position[0];
+    dubinspath_.ps(1) = start_node.position[1];
+    dubinspath_.ps(2) = start_node.position[2];
+    dubinspath_.chis = start_node.course_command;
+    dubinspath_.pe(0) = end_node.position[0];
+    dubinspath_.pe(1) = end_node.position[1];
+    dubinspath_.pe(2) = end_node.position[2];
+    dubinspath_.chie = end_node.course_command;
 
 
     Eigen::Vector3f crs = dubinspath_.ps;

@@ -10,7 +10,6 @@
     <arg name="verbose" value="false"/>
     <arg name="debug" value="false"/>
   </include>
-  <include file="$(find ros_groundstation)/launch/gs_fixedwing.launch"/>
 
   <!-- Load Global Parameters for this MAV -->
   <rosparam command="load" file="$(find rosplane_sim)/params/$(arg mav_name).yaml" ns="$(arg mav_name)"/>
@@ -20,6 +19,8 @@
     <arg name="mav_name"            value="$(arg mav_name)" />
     <arg name="model"               value="$(find rosplane_sim)/xacro/$(arg mav_name)_sil.xacro" />
   </include>
+  <rosparam command="load" file="$(find ros_groundstation)/params/auvsi_sil_topics.yaml"/>
+  <node name="$(anon ground_station)" pkg="ros_groundstation" type="ros_groundstation" output="screen"/>
 
   <group ns="$(arg mav_name)">
     <!-- ROS interface rosflight_io -->
@@ -33,13 +34,12 @@
 
     <node name="estimator" pkg="rosplane" type="rosplane_estimator" output="screen"/>
 
-    <node name="pathfollower" pkg="rosplane" type="rosplane_path_follower">
+    <node name="path_follower" pkg="rosplane" type="rosplane_path_follower">
        <remap from="state" to="truth"/>
     </node>
 
-    <node name="current_path_publisher" pkg="rostopic" type="rostopic"
-      args="pub current_path rosplane_msgs/Current_Path '0' '15.0'  '[0.0, 0.0, -100.0]'  '[1.0, 0.0, 0.0]'  '[0.0, 0.0, -100.0]'  '100.0' '1'"/>
-    <node name="auto_launch" pkg="auto_launch" type='auto_launch.py'>
+    <node name="path_manager" pkg="rosplane" type="rosplane_path_manager" output="screen"/>
+    <node name="auto_launch" pkg="auto_launch" type='auto_launch.py' output="screen">
       <param name="delay" value="10"/>
     </node>
   </group>
