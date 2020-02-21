@@ -10,6 +10,8 @@ add_message_files(
   FILES
   Controller_Commands.msg
   Current_Path.msg
+  Extended_Path.msg
+  Full_Path.msg
   Waypoint.msg
   Controller_Internals.msg
   State.msg
