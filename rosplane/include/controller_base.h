@@ -26,7 +26,8 @@ enum class alt_zones
   TAKE_OFF,
   CLIMB,
   DESCEND,
-  ALTITUDE_HOLD
+  ALTITUDE_HOLD,
+  LANDING
 };
 
 class controller_base
@@ -103,6 +104,10 @@ protected:
     double pwm_rad_e;
     double pwm_rad_a;
     double pwm_rad_r;
+    double landing_descent_rate; // m/s
+    double landing_altitude; // m The altitude to start the landing maneuver
+    double landing_pitch_deg;
+    double landing_va; // m/s
   };
 
   virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;

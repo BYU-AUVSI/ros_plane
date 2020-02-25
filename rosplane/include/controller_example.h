@@ -36,10 +36,15 @@ private:
   float at_integrator_;
   float at_differentiator_;
 
-  float altitiude_hold(float h_c, float h, const struct params_s &params, float Ts);
+  float altitude_hold(float h_c, float h, const struct params_s &params, float Ts);
   float a_error_;
   float a_integrator_;
   float a_differentiator_;
+
+  float sink_rate_with_throttle_hold(float h_dot_c, float h, const struct param_s &params, float Ts);
+  float sink_rate_error_;
+  float sink_rate_integrator_;
+  float sink_rate_differentiator_;
 
 //    float cooridinated_turn_hold(float v, const struct params_s &params, float Ts);
 //    float ct_error_;

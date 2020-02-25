@@ -51,6 +51,11 @@ controller_base::controller_base():
   nh_private_.param<double>("MAX_A", params_.max_a, 0.523);
   nh_private_.param<double>("MAX_R", params_.max_r, 0.523);
   nh_private_.param<double>("MAX_T", params_.max_t, 1.0);
+  nh_private_.param<double>("LANDING_DESCENT_RATE", params_.landing_descent_rate, 0.1);
+  nh_private_.param<double>("LANDING_ALTITIUDE", params_.landing_altitude, 5);
+  nh_private_.param<double>("LANDING_PITCH", params_.landing_altitude, 10);
+  nh_private_.param<double>("LANDING_VA", params_.landing_altitude, 15);
+
 
   func_ = boost::bind(&controller_base::reconfigure_callback, this, _1, _2);
   server_.setCallback(func_);
