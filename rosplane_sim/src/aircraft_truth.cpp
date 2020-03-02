@@ -114,6 +114,7 @@ void AircraftTruth::PublishTruth()
   double v = -GZ_COMPAT_GET_Y(C_linear_velocity_W_C);
   double w = -GZ_COMPAT_GET_Z(C_linear_velocity_W_C);
   msg.Vg = sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
+  msg.w = w;
   GazeboVector C_angular_velocity_W_C = GZ_COMPAT_GET_RELATIVE_ANGULAR_VEL(link_);
   msg.p = GZ_COMPAT_GET_X(C_angular_velocity_W_C);
   msg.q = -GZ_COMPAT_GET_Y(C_angular_velocity_W_C);

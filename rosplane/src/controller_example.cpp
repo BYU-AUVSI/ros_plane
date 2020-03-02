@@ -22,8 +22,6 @@ void controller_example::control(const params_s &params, const input_s &input, o
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params, input.Ts)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
-  if (input.h_c < params.landing_altitude)
-    current_zone = alt_zones::LANDING;
   switch (current_zone)
   {
     case alt_zones::TAKE_OFF:
@@ -53,10 +51,6 @@ void controller_example::control(const params_s &params, const input_s &input, o
         a_error_ = 0;
         a_integrator_ = 0;
         a_differentiator_ = 0;
-      } else if (input.h <= params.alt_toz)
-      {
-        ROS_DEBUG("takeoff");
-        current_zone = alt_zones::TAKE_OFF;
       }
       break;
     case alt_zones::DESCEND:
@@ -76,7 +70,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
       break;
     case alt_zones::ALTITUDE_HOLD:
       output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-      output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
+      output.theta_c = altitude_hold(input.h_c, input.h, params, input.Ts);
       if (input.h >= input.h_c + params.alt_hz)
       {
         ROS_DEBUG("descend");
@@ -93,13 +87,11 @@ void controller_example::control(const params_s &params, const input_s &input, o
         ap_differentiator_ = 0;
       }
       break;
-    case alt_zones::LANDING:
-      output.theta_c = params.landing_pitch_deg * M_PI / 180.;
-      output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
-      output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-    default:
+   default:
       break;
   }
+  if (current_zone != alt_zones::TAKE_OFF && input.h_c < params.landing_altitude)
+    output.delta_t = 0;
 
   output.current_zone = current_zone;
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
@@ -235,17 +227,17 @@ float controller_example::altitude_hold(float h_c, float h, const params_s &para
   float theta_c = sat(up + ui + ud, 35.0 * 3.14 / 180.0, -35.0 * 3.14 / 180.0);
   if (fabs(params.a_ki) >= 0.00001)
   {
-    float theta_c_unsat = up + ui + ud;:wchar_t
-        a_integrator_ = a_integrator_ + (Ts / params.a_ki) * (theta_c - theta_c_unsat);
+    float theta_c_unsat = up + ui + ud;
+    a_integrator_ = a_integrator_ + (Ts / params.a_ki) * (theta_c - theta_c_unsat);
   }
 
   at_error_ = error;
   return theta_c;
 }
 
-float controller_example::sink_rate_with_throttle_hold(float h_dot_c, float_h, const struct param_s &params, float Ts)
+float controller_example::sink_rate_with_throttle_hold(float h_dot_c, float h, const struct param_s &params, float Ts)
 {
-    
+  return 0; // TODO, or not
 }
 //float controller_example::cooridinated_turn_hold(float v, const params_s &params, float Ts)
 //{
