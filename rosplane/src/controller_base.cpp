@@ -24,6 +24,7 @@ controller_base::controller_base():
   nh_private_.param<double>("PWM_RAD_R", params_.pwm_rad_r, 1.0);
   nh_private_.param<double>("ALT_TOZ", params_.alt_toz, 20.0);
   nh_private_.param<double>("ALT_HZ", params_.alt_hz, 10.0);
+  nh_private_.param<double>("ALT_LZ", params_.alt_lz, 2.0);
   nh_private_.param<double>("TAU", params_.tau, 5.0);
   nh_private_.param<double>("COURSE_KP", params_.c_kp, 0.7329);
   nh_private_.param<double>("COURSE_KD", params_.c_kd, 0.0);

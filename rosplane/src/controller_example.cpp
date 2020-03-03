@@ -92,6 +92,22 @@ void controller_example::control(const params_s &params, const input_s &input, o
       ap_integrator_ = 0;
       ap_differentiator_ = 0;
     }
+    else if (input.h_c <= params.alt_lz)
+    {
+	ROS_DEBUG("land");
+	current_zone = alt_zones::LANDING;
+	ap_error_ = 0;
+	ap_integrator_ = 0;
+	ap_differentiator_ = 0;
+    }
+    break;
+  case alt_zones::LANDING:
+    output.delta_t = 0;
+    output.theta_c = airspeed_with_pitch_hold(input.Va_c, input.va, params, input.Ts);
+    if (input.h <= 0)
+    {
+	//if the plane reaches an altitude of 0, then we need to turn the engine off
+    }
     break;
   default:
     break;
