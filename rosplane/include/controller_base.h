@@ -26,7 +26,8 @@ enum class alt_zones
   TAKE_OFF,
   CLIMB,
   DESCEND,
-  ALTITUDE_HOLD
+  ALTITUDE_HOLD,
+  LANDING
 };
 
 class controller_base
@@ -69,6 +70,7 @@ protected:
   {
     double alt_hz;           /**< altitude hold zone */
     double alt_toz;          /**< altitude takeoff zone */
+    double alt_lz;           /**< landing zone */
     double tau;
     double c_kp;
     double c_kd;
