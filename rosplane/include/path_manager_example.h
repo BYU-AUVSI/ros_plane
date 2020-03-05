@@ -55,6 +55,7 @@ namespace rosplane
     bool has_passed_plane(Eigen::Vector3f &p, SemiPlane &semiplane);
     Path generate_path(const struct params_s &params, int idx_z, int idx_a, int idx_b, int idx_c, int subpath_index);
     Path generate_line_path(const struct params_s &params, int idx_a, int idx_b, int idx_c);
+    Path generate_landing_path(const struct params_s &params, int idx_a, int idx_b, int subpath_index);
 
     Path
     generate_fillet_path(const struct params_s &params, int idx_z, int idx_a, int idx_b, int idx_c, int path_index);

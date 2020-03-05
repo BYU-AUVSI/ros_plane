@@ -71,6 +71,9 @@ protected:
   {
     double R_min;
     bool do_fillets{true};
+    double landing_va;
+    double landing_alt;
+    double landing_angle_deg;
   };
 
   virtual void manage(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
