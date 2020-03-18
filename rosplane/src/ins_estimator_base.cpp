@@ -16,35 +16,19 @@ ins_estimator_base::ins_estimator_base():
   bool use_inertial_sense;
   std::string inertial_sense_topic;
   nh_private_.param<std::string>("inertial_sense_topic", inertial_sense_topic, "ins");
-  nh_private_.param<std::string>("gps_topic", gps_topic_, "gps");
   nh_private_.param<std::string>("imu_topic", imu_topic_, "imu/data");
   nh_private_.param<std::string>("baro_topic", baro_topic_, "baro");
   nh_private_.param<std::string>("airspeed_topic", airspeed_topic_, "airspeed");
-  nh_private_.param<std::string>("status_topic", status_topic_, "status");
   nh_private_.param<std::string>("status_topic", status_topic_, "status");
   nh_private_.param<double>("update_rate", update_rate_, 100.0);
   params_.Ts = 1.0f/update_rate_;
   params_.gravity = 9.8;
   nh_private_.param<double>("rho", params_.rho, 1.225);
-  nh_private_.param<double>("sigma_accel", params_.sigma_accel, 0.0245);
-  nh_private_.param<double>("sigma_n_gps", params_.sigma_n_gps, 0.21);
-  nh_private_.param<double>("sigma_e_gps", params_.sigma_e_gps, 0.21);
-  nh_private_.param<double>("sigma_Vg_gps", params_.sigma_Vg_gps, 0.0500);
-  nh_private_.param<double>("sigma_couse_gps", params_.sigma_course_gps, 0.0045);
   nh_private_.param<bool>("use_inertial_sense", use_inertial_sense, false);
 
-  if (use_inertial_sense)
-  {
-    inertial_sense_sub_ = nh_.subscribe(inertial_sense_topic, 1, &ins_estimator_base::inertialSenseCallback, this);
-    update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &ins_estimator_base::updateAltitudeAndAirspeed, this);
-    ROS_INFO("[Estimator Node] Using InertialSense.");
-  }
-  else
-  {
-    gps_sub_ = nh_.subscribe(gps_topic_, 10, &ins_estimator_base::gpsCallback, this);
-    imu_sub_ = nh_.subscribe(imu_topic_, 10, &ins_estimator_base::imuCallback, this);
-    update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &ins_estimator_base::update, this);
-  }
+  inertial_sense_sub_ = nh_.subscribe(inertial_sense_topic, 1, &ins_estimator_base::inertialSenseCallback, this);
+  update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &ins_estimator_base::updateAltitudeAndAirspeed, this);
+  ROS_INFO("[Estimator Node] Using InertialSense.");
 
   baro_sub_ = nh_.subscribe(baro_topic_, 10, &ins_estimator_base::baroAltCallback, this);
   status_sub_ = nh_.subscribe(status_topic_, 1, &ins_estimator_base::statusCallback, this);
