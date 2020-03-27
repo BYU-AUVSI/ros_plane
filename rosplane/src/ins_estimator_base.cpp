@@ -24,7 +24,29 @@ ins_estimator_base::ins_estimator_base():
   params_.Ts = 1.0f/update_rate_;
   params_.gravity = 9.8;
   nh_private_.param<double>("rho", params_.rho, 1.225);
-  nh_private_.param<bool>("use_inertial_sense", use_inertial_sense, false);
+
+  double lla_ref[3];
+  std::string lla_ref_param_names[]{"lat_ref", "lon_ref", "alt_ref"};
+  for(size_t i{0}; i<3; i++)
+  {
+    std::string lla_ref_param_name = lla_ref_param_names[i];
+    if(nh_private_.hasParam(lla_ref_param_name))
+    {
+      nh_private_.param<double>(lla_ref_param_name, lla_ref[i], 0.);
+    }
+    else if(nh_.hasParam(lla_ref_param_name))
+    {
+      nh_.param<double>(lla_ref_param_name, lla_ref[i], 0.);
+    }
+    else
+    {
+      ROS_ERROR("Missing parameter %s for LLA reference. Using 0.", lla_ref_param_name.c_str());
+      lla_ref[i] = 0.;
+    }
+  }
+  lat_ref_ = lla_ref[0];
+  lon_ref_ = lla_ref[1];
+  alt_ref_ = lla_ref[2];
 
   inertial_sense_sub_ = nh_.subscribe(inertial_sense_topic, 1, &ins_estimator_base::inertialSenseCallback, this);
   update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &ins_estimator_base::updateAltitudeAndAirspeed, this);
@@ -127,6 +149,10 @@ void ins_estimator_base::inertialSenseCallback(const nav_msgs::Odometry &msg_in)
   msg.chi_deg   += (msg.chi_deg < -180 ? 360 : 0);
   msg.chi_deg   -= (msg.chi_deg > 180 ? 360 : 0);
 
+  msg.initial_lat = lat_ref_;
+  msg.initial_lon = lon_ref_;
+  msg.initial_alt = alt_ref_;
+
   vehicle_state_pub_.publish(msg);
 }
 void ins_estimator_base::updateAirspeed(const ros::TimerEvent &)
@@ -228,6 +254,10 @@ void ins_estimator_base::update(const ros::TimerEvent &)
   msg.chi_deg = fmod(output.chi, 2.0*M_PI)*180/M_PI; //-360 to 360
   msg.chi_deg += (msg.chi_deg < -180 ? 360 : 0);
   msg.chi_deg -= (msg.chi_deg > 180 ? 360 : 0);
+
+  msg.initial_lat = lat_ref_;
+  msg.initial_lon = lon_ref_;
+  msg.initial_alt = alt_ref_;
 
   vehicle_state_pub_.publish(msg);
 }
@@ -384,7 +414,7 @@ void ins_estimator_base::statusCallback(const rosflight_msgs::Status &msg)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "rosplane_estimator");
+  ros::init(argc, argv, "ins_estimator");
   rosplane::ins_estimator_base *est = new rosplane::ins_estimator_example();
 
   ros::spin();
