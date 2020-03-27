@@ -153,6 +153,10 @@ private:
   double calibration_sum_;
   int avg_this_many_;
   int counted_this_many_ ;
+
+  double lat_ref_{0.};
+  double lon_ref_{0.};
+  double alt_ref_{0.};
 };
 
 } //end namespace
