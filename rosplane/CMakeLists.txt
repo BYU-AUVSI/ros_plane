@@ -70,13 +70,6 @@ add_executable(ins_estimator
 add_dependencies(ins_estimator ${catkin_EXPORTED_TARGETS})
 target_link_libraries(ins_estimator ${catkin_LIBRARIES})
 
-
-add_executable(ins_estimator
-            src/ins_estimator_base.cpp
-            src/ins_estimator_example.cpp)
-add_dependencies(ins_estimator ${catkin_EXPORTED_TARGETS})
-target_link_libraries(ins_estimator ${catkin_LIBRARIES})
-
 ## Declare a C++ executable
 add_executable(rosplane_path_follower
             src/path_follower_example.cpp
