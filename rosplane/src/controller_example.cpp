@@ -75,7 +75,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     break;
   case alt_zones::ALTITUDE_HOLD:
     output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-    output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
+    output.theta_c = altitiude_hold(input.h_c, input.h, input.phi, params, input.Ts);
     if (input.h >= input.h_c + params.alt_hz)
     {
       ROS_DEBUG("desend");
@@ -210,7 +210,7 @@ float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, cons
   return delta_t;
 }
 
-float controller_example::altitiude_hold(float h_c, float h, const params_s &params, float Ts)
+float controller_example::altitiude_hold(float h_c, float h, float phi, const params_s &params, float Ts)
 {
   float error = h_c - h;
 
@@ -222,10 +222,10 @@ float controller_example::altitiude_hold(float h_c, float h, const params_s &par
   float ui = params.a_ki*a_integrator_;
   float ud = params.a_kd*a_differentiator_;
 
-  float theta_c = sat(up + ui + ud, 35.0*3.14/180.0, -35.0*3.14/180.0);
+  float theta_c = sat(up + ui + ud + params.p_ff*fabs(phi), 35.0*3.14/180.0, -35.0*3.14/180.0);
   if (fabs(params.a_ki) >= 0.00001)
   {
-    float theta_c_unsat = up + ui + ud;
+    float theta_c_unsat = up + ui + ud + params.p_ff*fabs(phi);
     a_integrator_ = a_integrator_ + (Ts/params.a_ki)*(theta_c - theta_c_unsat);
   }
 
