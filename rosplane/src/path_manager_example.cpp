@@ -244,6 +244,8 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
   output.c[0] = 0;
   output.c[1] = 0;
   output.c[2] = 0;
+  output.orbit_start = 0;
+  output.orbit_end = M_PI;
 
   SemiPlane H1{ dubinspath_.w1, dubinspath_.q1 };
   SemiPlane H2{ dubinspath_.w2, dubinspath_.q1 };
@@ -254,7 +256,7 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
   switch (static_cast<dubin_state>(path_index))
   {
     case dubin_state::FIRST:
-      //dubinsParameters(waypoints_[0], waypoints_[1], params.R_min);
+      // dubinsParameters(waypoints_[0], waypoints_[1], params.R_min);
       // break intentionally omitted
     case dubin_state::BEFORE_H1_WRONG_SIDE:
       output.flag = false;
@@ -305,6 +307,11 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
       path.end_plane = H3;
       break;
   }
+  output.orbit_start = 0;
+  if (output.lambda == 1)
+    output.orbit_end = 6;
+  else
+    output.orbit_end = .1;
   return path;
 }
 
