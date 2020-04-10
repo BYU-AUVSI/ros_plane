@@ -14,7 +14,7 @@ path_manager_example::path_manager_example() : path_manager_base()
 
 void path_manager_example::manage(const params_s &params, const input_s &input, output_s &output)
 {
-  if (num_waypoints_ < 2)
+  if (num_waypoints_ == 0)
   {
     ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
     output.flag = false;
@@ -22,6 +22,18 @@ void path_manager_example::manage(const params_s &params, const input_s &input, 
     output.c[0] = 0.0f;
     output.c[1] = 0.0f;
     output.c[2] = -50.0f;
+    output.rho = params.R_min;
+    output.lambda = 1;
+    output.orbit_start = 0;
+    output.orbit_end = 1.9999 * M_PI;
+  }
+  else if (num_waypoints_ == 1)
+  {
+    output.flag = false;
+    output.Va_d = 12;
+    output.c[0] = waypoints_[0].w[0];
+    output.c[1] = waypoints_[0].w[1];
+    output.c[2] = waypoints_[0].w[2];
     output.rho = params.R_min;
     output.lambda = 1;
     output.orbit_start = 0;
@@ -109,15 +121,16 @@ rosplane_msgs::Full_Path path_manager_example::generate_full_path(const path_man
 {
   rosplane_msgs::Full_Path full_path;
   full_path.label = "ROSplane Path Manager";
-  for (size_t idx_a = 0; idx_a < num_waypoints_; idx_a++)
-  {
-    size_t idx_b = (idx_a + 1) % num_waypoints_;
-    size_t idx_c = (idx_b + 1) % num_waypoints_;
-    Path path = generate_path(params, 0, idx_a, idx_b, idx_c, 0);
-    full_path.paths.push_back(generate_path_message(path));
-    for (size_t subpath_index{ 1 }; subpath_index < path.num_paths; subpath_index++)
-      full_path.paths.push_back(generate_path_message(generate_path(params, 0, idx_a, idx_b, idx_c, subpath_index)));
-  }
+  if (num_waypoints_ > 1)
+    for (size_t idx_a = 0; idx_a < num_waypoints_; idx_a++)
+    {
+      size_t idx_b = (idx_a + 1) % num_waypoints_;
+      size_t idx_c = (idx_b + 1) % num_waypoints_;
+      Path path = generate_path(params, 0, idx_a, idx_b, idx_c, 0);
+      full_path.paths.push_back(generate_path_message(path));
+      for (size_t subpath_index{ 1 }; subpath_index < path.num_paths; subpath_index++)
+        full_path.paths.push_back(generate_path_message(generate_path(params, 0, idx_a, idx_b, idx_c, subpath_index)));
+    }
   return full_path;
 }
 
