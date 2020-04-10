@@ -85,6 +85,7 @@ private:
   ros::Publisher  current_path_pub_;      /**< controller commands publication */
   ros::Publisher  extended_path_pub_;      /**< controller commands publication */
   ros::Publisher full_path_pub_;
+  ros::Publisher waypoint_index_pub_;
 
   struct params_s params_;
 
