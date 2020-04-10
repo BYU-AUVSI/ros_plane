@@ -312,6 +312,12 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
     output.orbit_end = 6;
   else
     output.orbit_end = .1;
+  if (output.flag)
+  {
+    output.line_end[0] = output.r[0] + 1000 * dubinspath_.q1(0);
+    output.line_end[1] = output.r[1] + 1000 * dubinspath_.q1(1);
+    output.line_end[2] = output.r[2] + 1000 * dubinspath_.q1(2);
+  }
   return path;
 }
 
