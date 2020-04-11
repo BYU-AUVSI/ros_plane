@@ -247,6 +247,7 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
   Path path;
   output_s &output = path.output;
   path.num_paths = static_cast<int>(dubin_state::BEFORE_H3) + 1;
+  ROS_WARN("generate_dubins_path Dubins Path Count: %d", path.num_paths);
   output.Va_d = waypoints_[idx_a].Va_d;
   output.r[0] = 0;
   output.r[1] = 0;
@@ -260,18 +261,20 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
   output.orbit_start = 0;
   output.orbit_end = M_PI;
 
+  struct dubinspath_s dubinspath_ = this->dubinsParameters(waypoints_[idx_a], waypoints_[idx_b], params.R_min);
+
   SemiPlane H1{ dubinspath_.w1, dubinspath_.q1 };
   SemiPlane H2{ dubinspath_.w2, dubinspath_.q1 };
   SemiPlane H3{ dubinspath_.w3, dubinspath_.q3 };
-
-  struct dubinspath_s dubinspath_ = this->dubinsParameters(waypoints_[idx_a], waypoints_[idx_b], params.R_min);
-
+  
   switch (static_cast<dubin_state>(path_index))
   {
     case dubin_state::FIRST:
+      ROS_WARN("dubin_state: FIRST");
       // dubinsParameters(waypoints_[0], waypoints_[1], params.R_min);
       // break intentionally omitted
     case dubin_state::BEFORE_H1_WRONG_SIDE:
+      ROS_WARN("dubin_state: BEFORE_H1_WRONG_SIDE");
       output.flag = false;
       output.c[0] = dubinspath_.cs(0);
       output.c[1] = dubinspath_.cs(1);
@@ -281,6 +284,7 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
       path.end_plane = -H1;
       break;
     case dubin_state::BEFORE_H1:
+      ROS_WARN("dubin_state: BEFORE_H1");
       output.flag = false;
       output.c[0] = dubinspath_.cs(0);
       output.c[1] = dubinspath_.cs(1);
@@ -290,6 +294,7 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
       path.end_plane = H1;
       break;
     case dubin_state::STRAIGHT:
+      ROS_WARN("dubin_state: STRAIGHT");
       output.flag = true;
       output.r[0] = dubinspath_.w1(0);
       output.r[1] = dubinspath_.w1(1);
@@ -302,6 +307,7 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
       path.end_plane = H2;
       break;
     case dubin_state::BEFORE_H3_WRONG_SIDE:
+      ROS_WARN("dubin_state: BEFORE_H3_WRONG_SIDE");
       output.flag = false;
       output.c[0] = dubinspath_.ce(0);
       output.c[1] = dubinspath_.ce(1);
@@ -311,6 +317,7 @@ path_manager_example::Path path_manager_example::generate_dubins_path(const stru
       path.end_plane = -H3;
       break;
     case dubin_state::BEFORE_H3:
+      ROS_WARN("dubin_state: BEFORE_H3");
       output.flag = false;
       output.c[0] = dubinspath_.ce(0);
       output.c[1] = dubinspath_.ce(1);
