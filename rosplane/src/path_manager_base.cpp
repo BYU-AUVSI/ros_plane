@@ -1,8 +1,6 @@
 #include "path_manager_base.h"
 #include "path_manager_example.h"
 
-#include <std_msgs/Int32.h>
-
 namespace rosplane
 {
 path_manager_base::path_manager_base()
@@ -19,7 +17,6 @@ path_manager_base::path_manager_base()
   current_path_pub_ = nh_.advertise<rosplane_msgs::Current_Path>("current_path", 10);
   extended_path_pub_ = nh_.advertise<rosplane_msgs::Extended_Path>("extended_path", 10);
   full_path_pub_ = nh_.advertise<rosplane_msgs::Full_Path>("full_path", 10);
-  waypoint_index_pub_ = nh_.advertise<std_msgs::Int32>("waypoint_index", 1);
 
   update_timer_ = nh_.createTimer(ros::Duration(1.0 / update_rate_), &path_manager_base::current_path_publish, this);
 
@@ -119,10 +116,6 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
 
   current_path_pub_.publish(current_path);
   extended_path_pub_.publish(extended_path);
-
-  std_msgs::Int32 waypoint_index;
-  waypoint_index.data = idx_a_;
-  waypoint_index_pub_.publish(waypoint_index);
 }
 
 }  // namespace rosplane
