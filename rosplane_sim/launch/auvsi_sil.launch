@@ -37,6 +37,7 @@
     </node>
 
     <node name="path_manager" pkg="rosplane" type="rosplane_path_manager" output="screen">
+      <param name="~R_min" value="30"/>
     	<remap from="state" to="truth"/>
     </node>
 
