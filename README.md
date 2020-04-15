@@ -18,7 +18,7 @@ Note: To successfully build, it may be needed to clone [rosflight_plugins](https
 
 `git submodule update --init --recursive`
 
-#Changes from upstream ROSplane
+# Changes from upstream ROSplane
 * rosplane\_msgs
 	* Added `Extended_Path` and `Full_Path` messages. These are used with the changes to the path manager; see below.
 * Estimator
