@@ -1,5 +1,7 @@
 # ROSplane
 
+This the fork of ROSplane used by the BYU AUVSI SUAS competition team, with various changes and added features to fulfill the requirements of that competition.
+
 ROSplane is limited-feature fixed-wing autopilot built around ROS. It is intended to be flown with [ROSflight](https://rosflight.org) as the hardware I/O or in the Gazebo simulation environment.  It is built according to the method published in [Small Unmanned Aircraft: Theory and Practice](http://uavbook.byu.edu/doku.php) by Beard and McLain, so as to allow anyone to easily understand, modify and use the code.  This framework is inherently modular and extensively documented so as to aid the user in understanding and extending for personal use.
 
 This repository features three ROS packages: rosplane, rosplane\_msgs, and rosplane\_sim. The contents of each of these three packages are described below.
@@ -15,6 +17,21 @@ Note: To successfully build, it may be needed to clone [rosflight_plugins](https
 `cd rosflight/`
 
 `git submodule update --init --recursive`
+
+#Changes from upstream ROSplane
+* rosplane\_msgs
+	* Added `Extended_Path` and `Full_Path` messages. These are used with the changes to the path manager; see below.
+* Estimator
+    * Added the `ins_estimator` node, which uses an inertial sense, along with a barometer and airspeed sensor to provide state estimates.
+* Controller
+    * Added pitch feedforward: In a turn, the plane will pitch up to compensate for loss of lift from banking.
+* Path Manager
+    * Rewritten to separate generating paths from keeping track of the current path.
+    * Added support for extended paths, which have additional information, such as which part of an arc will be flown, and how far a line will be flown. This additional information is only for user convenience, and the path manager does not use it. These are published to the `extended_path` topic.
+    * Added support for full paths. Each time waypoints are added or removed, the path manager creates the whole path that will be followed. Again, this is not used by the path follower, but makes it much easier to see what the plane is doing. These are published to the `full_path` topic. Unlike the current path and extended path, these are only published when waypoints change.
+    * Added the `do_fillets` parameter, which defaults to true. If it is true, it will add fillets to paths between waypoints that don't have heading information. If false, it will use straight lines, which will always be overshot.
+    * In default ROSplane behavior, if there are no waypoints, it will orbit the origin. When a new waypoint it added, the current position of the plane is added as a waypoint, which allows the plane to fly to the next waypoint better, but is annoying in certain situations. We removed that behavior. With no waypoint, it still orbits the origin. With one waypoint, it will orbit that waypoint. At no point is the current position of the plane added as a waypoint, and so you will have to do that manually if you want that behavior.
+    * 
 
 
 # rosplane
